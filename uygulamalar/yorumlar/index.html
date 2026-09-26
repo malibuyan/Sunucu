@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#4f46e5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Yorumlar">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="ikon-192.png">
+<link rel="apple-touch-icon" href="ikon-192.png">
+<title>Yorum Listeleyici</title>
+<style>
+:root{
+  --ana:#4f46e5; --ana-2:#4338ca; --ana-acik:#eef2ff;
+  --zemin:#f4f4f7; --kart:#ffffff; --yazi:#16161d; --soluk:#6b6b78; --cizgi:#e4e4ea;
+  --yesil:#15803d; --kirmizi:#b91c1c; --kirmizi-z:#fee2e2;
+  --golge:0 1px 2px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --ana:#818cf8; --ana-2:#6366f1; --ana-acik:#23234a;
+    --zemin:#0f0f13; --kart:#1a1a21; --yazi:#ececf1; --soluk:#9a9aa8; --cizgi:#2b2b35;
+    --yesil:#4ade80; --kirmizi:#fca5a5; --kirmizi-z:#3b1414;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--zemin);color:var(--yazi);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,textarea{font:inherit;color:inherit}
+a{color:var(--ana)}
+header{position:sticky;top:0;z-index:10;background:var(--ana-2);color:#fff;
+  padding:calc(env(safe-area-inset-top) + 10px) 8px 10px;display:flex;align-items:center;gap:4px;min-height:56px}
+@media (prefers-color-scheme: dark){header{background:#1e1b4b}}
+header h1{font-size:18px;margin:0 0 0 6px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ikon-btn{background:none;border:0;color:inherit;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;cursor:pointer}
+.ikon-btn:active{background:rgba(255,255,255,.15)}
+.ikon-btn svg{width:24px;height:24px}
+main{max-width:720px;margin:0 auto;padding:14px 14px calc(env(safe-area-inset-bottom) + 90px)}
+.kart{background:var(--kart);border:1px solid var(--cizgi);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:var(--golge)}
+.kart h2{font-size:16px;margin:0 0 10px}
+.soluk{color:var(--soluk);font-size:13px}
+label{display:block;font-size:14px;font-weight:600;margin:10px 0 4px}
+input[type=text],input[type=password],input[type=number],input[type=search],textarea{
+  width:100%;padding:12px;border:1px solid var(--cizgi);border-radius:10px;background:var(--zemin);font-size:16px;outline:none}
+input:focus,textarea:focus{border-color:var(--ana)}
+textarea{min-height:90px;resize:vertical;font-size:13px;word-break:break-all}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--ana-2);color:#fff;border:0;border-radius:10px;
+  padding:12px 16px;font-weight:600;cursor:pointer;text-decoration:none;min-height:46px}
+.btn:disabled{opacity:.55}
+.btn.tam{width:100%;margin-top:14px}
+.btn.ikincil{background:var(--ana-acik);color:var(--ana)}
+.btn.tehlike{background:var(--kirmizi-z);color:var(--kirmizi)}
+.btn svg{width:18px;height:18px}
+.hata{background:var(--kirmizi-z);color:var(--kirmizi);border-radius:10px;padding:12px;margin:10px 0;font-size:14px}
+.sekme{display:flex;background:var(--zemin);border-radius:10px;padding:4px;gap:4px;margin-bottom:6px}
+.sekme button{flex:1;border:0;background:none;padding:9px 6px;border-radius:8px;font-size:14px;font-weight:600;color:var(--soluk);cursor:pointer}
+.sekme button.aktif{background:var(--kart);color:var(--ana);box-shadow:var(--golge)}
+details{margin-top:8px}
+summary{cursor:pointer;color:var(--ana);font-size:14px;font-weight:600}
+ol.adim{padding-left:20px;font-size:14px;margin:8px 0}
+ol.adim li{margin-bottom:6px}
+code{background:var(--zemin);padding:1px 5px;border-radius:5px;font-size:13px}
+.secim{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--cizgi);border-radius:10px;margin-top:8px;cursor:pointer}
+.secim input{width:20px;height:20px;accent-color:var(--ana)}
+
+/* paylaşımlar */
+.post{display:flex;gap:12px;cursor:pointer;align-items:flex-start}
+.post:active{opacity:.7}
+.post img{width:72px;height:72px;border-radius:10px;object-fit:cover;flex:none;background:var(--zemin)}
+.post .metin{flex:1;min-width:0}
+.post .ozet{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:15px;word-break:break-word}
+.post .alt{display:flex;justify-content:space-between;margin-top:6px}
+.rozet{background:var(--ana-acik);color:var(--ana);border-radius:20px;padding:2px 10px;font-size:13px;font-weight:600;white-space:nowrap}
+
+/* detay */
+.istat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.istat div{background:var(--kart);border:1px solid var(--cizgi);border-radius:12px;padding:10px 4px;text-align:center;font-size:13px;color:var(--soluk)}
+.istat b{display:block;font-size:22px;color:var(--ana);line-height:1.2}
+.anahtar{display:flex;align-items:center;justify-content:space-between;padding:8px 0;font-size:15px;gap:10px}
+.anahtar+.anahtar{border-top:1px solid var(--cizgi)}
+.dugme{position:relative;width:46px;height:28px;flex:none}
+.dugme input{opacity:0;width:0;height:0}
+.dugme span{position:absolute;inset:0;background:var(--cizgi);border-radius:20px;transition:.2s}
+.dugme span:before{content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.dugme input:checked+span{background:var(--ana-2)}
+.dugme input:checked+span:before{transform:translateX(18px)}
+.eylemler{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.eylemler .btn{padding:10px 4px;font-size:13px;flex-direction:column;gap:4px}
+.kisi{padding:11px 0;border-bottom:1px solid var(--cizgi);cursor:pointer}
+.kisi:last-child{border-bottom:0}
+.kisi .ust{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.kisi .ad{font-weight:600;word-break:break-word}
+.kisi .no{color:var(--soluk);font-weight:400;margin-right:4px}
+.kisi .yorum{color:var(--soluk);font-size:14px;margin-top:2px;word-break:break-word}
+.kisi:not(.acik) .yorum{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.kisi .tum{display:none;margin-top:6px}
+.kisi.acik .tum{display:block}
+.kisi .tum div{font-size:14px;padding:6px 10px;background:var(--zemin);border-radius:8px;margin-top:4px;word-break:break-word}
+.kisi .tum small{display:block;color:var(--soluk);font-size:12px}
+.post-baslik{display:flex;gap:12px}
+.post-baslik img{width:56px;height:56px;border-radius:10px;object-fit:cover;flex:none}
+.post-baslik .ozet{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:14px}
+
+/* çekiliş penceresi */
+.perde{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.pencere{background:var(--kart);width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:18px 16px calc(env(safe-area-inset-bottom) + 18px);max-height:90vh;overflow:auto}
+.pencere h2{margin:0 0 6px;font-size:19px}
+.yan{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cark{font-size:22px;font-weight:700;text-align:center;padding:22px 8px;min-height:80px;color:var(--ana);word-break:break-word}
+.sonuc div{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:10px;background:var(--zemin);margin-top:6px;font-weight:600}
+.sonuc .etiket{font-size:12px;font-weight:700;padding:2px 8px;border-radius:12px;background:var(--ana-2);color:#fff;white-space:nowrap}
+.sonuc .yedek .etiket{background:var(--soluk)}
+.bilgi{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 20px);transform:translateX(-50%);background:#222;color:#fff;
+  padding:10px 16px;border-radius:10px;font-size:14px;z-index:60;max-width:90vw;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.yukleniyor{display:flex;flex-direction:column;align-items:center;gap:12px;padding:50px 0;color:var(--soluk);text-align:center}
+.donen{width:34px;height:34px;border:3px solid var(--cizgi);border-top-color:var(--ana);border-radius:50%;animation:don 0.8s linear infinite}
+@keyframes don{to{transform:rotate(360deg)}}
+.bos{text-align:center;color:var(--soluk);padding:30px 10px}
+.gizli{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <button class="ikon-btn gizli" id="geriBtn" aria-label="Geri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+  <h1 id="baslik">Yorum Listeleyici</h1>
+  <button class="ikon-btn gizli" id="yenileBtn" aria-label="Yenile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
+  <button class="ikon-btn gizli" id="ayarBtn" aria-label="Ayarlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+</header>
+<main id="icerik"><div class="yukleniyor"><div class="donen"></div></div></main>
+<div id="katman"></div>
+
+<script>
+'use strict';
+const S = {
+  durum: null, ekran: 'yukleniyor',
+  paylasimlar: [], sonraki: null, listeYuklendi: false,
+  detay: null, filtre: { yanit: true, sayfaHaric: true, ara: '' }, gosterim: 300,
+  kurulumSayfalar: null, yuklemeIstemi: null,
+};
+const $ = s => document.querySelector(s);
+const icerik = $('#icerik');
+const e = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const kucuk = s => String(s ?? '').toLocaleLowerCase('tr');
+const tarih = t => t ? new Date(t).toLocaleString('tr-TR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '';
+const yukleniyorHtml = m => `<div class="yukleniyor"><div class="donen"></div><div>${e(m || '')}</div></div>`;
+
+function bilgi(m, sure = 2600) {
+  const d = document.createElement('div'); d.className = 'bilgi'; d.textContent = m;
+  document.body.appendChild(d); setTimeout(() => d.remove(), sure);
+}
+
+async function api(islem, veri = {}) {
+  let r;
+  try {
+    r = await fetch('api.php', { method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-YL': '1' }, body: JSON.stringify({ islem, ...veri }) });
+  } catch { throw new Error('Sunucuya ulaşılamadı. İnternet bağlantını kontrol et.'); }
+  let j; try { j = await r.json(); } catch { throw new Error('Sunucu yanıtı okunamadı (HTTP ' + r.status + '). PHP ve curl kurulu mu?'); }
+  if (!j.ok) {
+    if (j.kod === 'giris' || j.kod === 'kurulum') { S.durum = { kurulu: j.kod !== 'kurulum', girisli: false }; git(j.kod === 'kurulum' ? 'kurulum' : 'giris', true); }
+    const h = new Error(j.hata || 'Hata'); h.kod = j.kod; throw h;
+  }
+  return j;
+}
+
+/* ---------- Gezinme (Android geri tuşu çalışır) ---------- */
+function git(ekran, degistir = false) {
+  S.ekran = ekran;
+  const st = { ekran };
+  degistir ? history.replaceState(st, '') : history.pushState(st, '');
+  ciz();
+}
+window.addEventListener('popstate', ev => {
+  if ($('#katman').innerHTML) { $('#katman').innerHTML = ''; return; }
+  const hedef = ev.state?.ekran;
+  const giris = !S.durum?.girisli;
+  S.ekran = giris ? (S.durum?.kurulu ? 'giris' : 'kurulum') : (hedef && !['giris','kurulum','yukleniyor'].includes(hedef) ? hedef : 'liste');
+  ciz();
+});
+$('#geriBtn').onclick = () => history.back();
+$('#ayarBtn').onclick = () => git('ayarlar');
+$('#yenileBtn').onclick = () => {
+  if (S.ekran === 'detay' && S.detay) detayAc(S.detay.post.id, true);
+  else { S.listeYuklendi = false; S.paylasimlar = []; ciz(); }
+};
+
+function ustBar(baslik, { geri = false, yenile = false, ayar = false } = {}) {
+  $('#baslik').textContent = baslik;
+  $('#geriBtn').classList.toggle('gizli', !geri);
+  $('#yenileBtn').classList.toggle('gizli', !yenile);
+  $('#ayarBtn').classList.toggle('gizli', !ayar);
+}
+
+function ciz() {
+  window.scrollTo(0, 0);
+  ({ kurulum: cizKurulum, giris: cizGiris, liste: cizListe, detay: cizDetay, ayarlar: cizAyarlar }[S.ekran] || (() => {}))();
+}
+
+/* ---------- Facebook bağlantı formu (kurulum ve ayarlarda ortak) ---------- */
+function baglantiFormuHtml() {
+  return `
+  <div class="sekme" id="bSekme">
+    <button data-s="kolay" class="aktif">Kolay kurulum</button>
+    <button data-s="token">Sayfa anahtarım var</button>
+  </div>
+  <div id="bKolay">
+    <label>Uygulama Kimliği (App ID)</label><input type="text" id="bAppId" inputmode="numeric" autocomplete="off">
+    <label>Uygulama Gizli Anahtarı (App Secret)</label><input type="password" id="bSecret" autocomplete="off">
+    <label>Kullanıcı erişim anahtarı</label><textarea id="bKisa" placeholder="EAA... ile başlayan anahtar"></textarea>
+    <details><summary>Bu bilgileri nereden bulurum?</summary>
+      <ol class="adim">
+        <li><a href="https://developers.facebook.com/apps" target="_blank" rel="noopener">developers.facebook.com/apps</a> adresinde <b>Uygulama Oluştur</b> de, türü <b>İşletme</b> seç.</li>
+        <li>Uygulamada <b>Ayarlar &gt; Temel</b> sayfasından <b>Uygulama Kimliği</b> ve <b>Uygulama Gizli Anahtarı</b>nı kopyala.</li>
+        <li><a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener">Graph API Explorer</a>'ı aç, sağ üstten uygulamanı seç.</li>
+        <li>İzinlere <code>pages_show_list</code>, <code>pages_read_engagement</code>, <code>pages_read_user_content</code> ekle.</li>
+        <li><b>Generate Access Token</b> de, açılan pencerede sayfanı seçip onayla. Çıkan anahtarı buraya yapıştır.</li>
+      </ol>
+      <div class="soluk">Sistem bu anahtarı süresiz bir sayfa anahtarına çevirir. App Secret sunucuya kaydedilmez.</div>
+    </details>
+    <button class="btn ikincil tam" id="bGetir">Sayfalarımı getir</button>
+    <div id="bSayfalar"></div>
+  </div>
+  <div id="bToken" class="gizli">
+    <label>Sayfa erişim anahtarı</label><textarea id="bSayfaToken" placeholder="EAA..."></textarea>
+    <div class="soluk">Kısa süreli anahtar girersen birkaç saat sonra yenilemen gerekir. Süresiz anahtar için Kolay kurulumu kullan.</div>
+  </div>`;
+}
+function baglantiFormuBagla() {
+  let sekme = 'kolay';
+  document.querySelectorAll('#bSekme button').forEach(b => b.onclick = () => {
+    sekme = b.dataset.s;
+    document.querySelectorAll('#bSekme button').forEach(x => x.classList.toggle('aktif', x === b));
+    $('#bKolay').classList.toggle('gizli', sekme !== 'kolay');
+    $('#bToken').classList.toggle('gizli', sekme !== 'token');
+  });
+  $('#bGetir').onclick = async () => {
+    const btn = $('#bGetir'); btn.disabled = true; btn.textContent = 'Getiriliyor…';
+    try {
+      const j = await api('sayfalari_getir', { appId: $('#bAppId').value, appSecret: $('#bSecret').value, kisaToken: $('#bKisa').value });
+      $('#bSayfalar').innerHTML = '<label>Sayfanı seç</label>' + j.sayfalar.map((s, i) =>
+        `<label class="secim"><input type="radio" name="bSayfa" value="${e(s.id)}" ${i === 0 ? 'checked' : ''}> ${e(s.ad)}</label>`).join('');
+    } catch (h) { $('#bSayfalar').innerHTML = `<div class="hata">${e(h.message)}</div>`; }
+    btn.disabled = false; btn.textContent = 'Sayfalarımı getir';
+  };
+  return () => {
+    if (sekme === 'token') {
+      const t = $('#bSayfaToken').value.trim();
+      if (!t) throw new Error('Sayfa anahtarını yapıştır.');
+      return { token: t };
+    }
+    const s = document.querySelector('input[name=bSayfa]:checked');
+    if (!s) throw new Error('Önce "Sayfalarımı getir" ile sayfanı seç.');
+    return { sayfaId: s.value };
+  };
+}
+
+/* ---------- Kurulum ---------- */
+function cizKurulum() {
+  ustBar('Kurulum');
+  icerik.innerHTML = `
+  <div class="kart">
+    <h2>1. Uygulama şifresi</h2>
+    <div class="soluk">Bu uygulamaya girerken kullanacağın şifre. Facebook şifren değil.</div>
+    <label>Şifre</label><input type="password" id="kSifre" autocomplete="new-password">
+    <label>Şifre tekrar</label><input type="password" id="kSifre2" autocomplete="new-password">
+  </div>
+  <div class="kart"><h2>2. Facebook sayfası bağlantısı</h2>${baglantiFormuHtml()}</div>
+  <div id="kHata"></div>
+  <button class="btn tam" id="kKaydet">Kurulumu tamamla</button>`;
+  const al = baglantiFormuBagla();
+  $('#kKaydet').onclick = async () => {
+    const btn = $('#kKaydet'); $('#kHata').innerHTML = '';
+    try {
+      const s = $('#kSifre').value;
+      if (s.length < 6) throw new Error('Şifre en az 6 karakter olmalı.');
+      if (s !== $('#kSifre2').value) throw new Error('Şifreler aynı değil.');
+      const b = al();
+      btn.disabled = true; btn.textContent = 'Kaydediliyor…';
+      S.durum = await api('kaydet', { sifre: s, ...b });
+      bilgi('Kurulum tamam: ' + S.durum.sayfa.ad);
+      git('liste', true);
+    } catch (h) { $('#kHata').innerHTML = `<div class="hata">${e(h.message)}</div>`; btn.disabled = false; btn.textContent = 'Kurulumu tamamla'; }
+  };
+}
+
+/* ---------- Giriş ---------- */
+function cizGiris() {
+  ustBar('Yorum Listeleyici');
+  icerik.innerHTML = `
+  <div class="kart" style="margin-top:30px">
+    <h2>Giriş</h2>
+    <form id="gForm">
+      <input type="password" id="gSifre" placeholder="Şifre" autocomplete="current-password">
+      <div id="gHata"></div>
+      <button class="btn tam" id="gBtn">Giriş yap</button>
+    </form>
+  </div>`;
+  $('#gForm').onsubmit = async ev => {
+    ev.preventDefault();
+    const btn = $('#gBtn'); btn.disabled = true; $('#gHata').innerHTML = '';
+    try { S.durum = await api('giris', { sifre: $('#gSifre').value }); git('liste', true); }
+    catch (h) { $('#gHata').innerHTML = `<div class="hata">${e(h.message)}</div>`; btn.disabled = false; }
+  };
+}
+
+/* ---------- Paylaşım listesi ---------- */
+function postKart(p) {
+  return `<div class="kart post" data-id="${e(p.id)}">
+    ${p.resim ? `<img src="${e(p.resim)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ''}
+    <div class="metin">
+      <div class="ozet">${e(p.metin) || '<span class="soluk">(metinsiz paylaşım)</span>'}</div>
+      <div class="alt"><span class="soluk">${tarih(p.zaman)}</span><span class="rozet">${p.yorum} yorum</span></div>
+    </div></div>`;
+}
+async function cizListe() {
+  ustBar(S.durum?.sayfa?.ad || 'Paylaşımlar', { yenile: true, ayar: true });
+  const ust = `
+  <details class="kart" style="margin-top:0"><summary>Bağlantı veya ID ile aç</summary>
+    <input type="text" id="lId" placeholder="Paylaşım bağlantısı veya ID" style="margin-top:10px">
+    <button class="btn ikincil tam" id="lAc">Yorumları getir</button>
+  </details>`;
+  const ciz2 = () => {
+    icerik.innerHTML = ust + (S.paylasimlar.length ? S.paylasimlar.map(postKart).join('') : '<div class="bos">Paylaşım bulunamadı.</div>')
+      + (S.sonraki ? '<button class="btn ikincil tam" id="lDaha">Daha eski paylaşımlar</button>' : '');
+    bagla();
+  };
+  const bagla = () => {
+    document.querySelectorAll('.post').forEach(k => k.onclick = () => detayAc(k.dataset.id));
+    $('#lAc').onclick = () => { const v = $('#lId').value.trim(); if (v) detayAc(v); };
+    const d = $('#lDaha');
+    if (d) d.onclick = async () => {
+      d.disabled = true; d.textContent = 'Yükleniyor…';
+      try { const j = await api('paylasimlar', { sonraki: S.sonraki }); S.paylasimlar.push(...j.liste); S.sonraki = j.sonraki; ciz2(); }
+      catch (h) { bilgi(h.message); d.disabled = false; d.textContent = 'Daha eski paylaşımlar'; }
+    };
+  };
+  if (S.listeYuklendi) return ciz2();
+  icerik.innerHTML = ust + yukleniyorHtml('Paylaşımlar getiriliyor…'); bagla();
+  try {
+    const j = await api('paylasimlar');
+    S.paylasimlar = j.liste; S.sonraki = j.sonraki; S.listeYuklendi = true;
+    if (S.ekran === 'liste') ciz2();
+  } catch (h) {
+    if (S.ekran === 'liste') icerik.innerHTML = ust + `<div class="hata">${e(h.message)}</div>`, bagla();
+  }
+}
+
+/* ---------- Yorumlar ---------- */
+async function detayAc(id, yenile = false) {
+  if (!yenile) git('detay'); else ciz();
+  S.detay = { yukleniyor: true, id };
+  S.gosterim = 300;
+  cizDetay();
+  try {
+    const j = await api('yorumlar', { postId: id });
+    S.detay = j;
+  } catch (h) { S.detay = { hata: h.message, id }; }
+  if (S.ekran === 'detay') cizDetay();
+}
+function hesapla() {
+  const d = S.detay, f = S.filtre, harita = new Map();
+  let adsiz = 0, yorumSay = 0;
+  for (const y of d.yorumlar) {
+    if (!f.yanit && y.y) continue;
+    if (f.sayfaHaric && y.k === d.sayfaId) continue;
+    yorumSay++;
+    if (!y.k) { adsiz++; continue; }
+    let p = harita.get(y.k);
+    if (!p) { p = { id: y.k, ad: y.a || '(isimsiz)', yorumlar: [] }; harita.set(y.k, p); }
+    p.yorumlar.push(y);
+  }
+  let kisiler = [...harita.values()];
+  const q = kucuk(f.ara.trim());
+  if (q) {
+    kisiler = kisiler.filter(p => kucuk(p.ad).includes(q) || p.yorumlar.some(y => kucuk(y.m).includes(q)));
+    yorumSay = kisiler.reduce((t, p) => t + p.yorumlar.length, 0);
+  }
+  return { kisiler, adsiz, yorumSay };
+}
+function cizDetay() {
+  ustBar('Yorumlar', { geri: true, yenile: true });
+  const d = S.detay;
+  if (!d || d.yukleniyor) { icerik.innerHTML = yukleniyorHtml('Tüm yorumlar çekiliyor…\nÇok yorumlu paylaşımlarda biraz sürebilir.'); return; }
+  if (d.hata) { icerik.innerHTML = `<div class="hata">${e(d.hata)}</div>`; return; }
+  const p = d.post;
+  icerik.innerHTML = `
+  <div class="kart post-baslik">
+    ${p.resim ? `<img src="${e(p.resim)}" alt="" referrerpolicy="no-referrer">` : ''}
+    <div style="min-width:0;flex:1"><div class="ozet">${e(p.metin) || '(metinsiz paylaşım)'}</div>
+      <div class="soluk">${tarih(p.zaman)}${p.link ? ` · <a href="${e(p.link)}" target="_blank" rel="noopener">Facebook'ta aç</a>` : ''}</div></div>
+  </div>
+  <div class="istat" id="dIstat"></div>
+  <div class="eylemler">
+    <button class="btn" id="dCekilis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8S10 3 7.5 3 5 6 7 7.5 12 8 12 8zM12 8s2-5 4.5-5S19 6 17 7.5 12 8 12 8z"/></svg>Çekiliş</button>
+    <button class="btn ikincil" id="dCsv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Excel (CSV)</button>
+    <button class="btn ikincil" id="dPaylas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>Listeyi paylaş</button>
+  </div>
+  <div class="kart">
+    <div class="anahtar"><span>Yanıtları dahil et</span><label class="dugme"><input type="checkbox" id="fYanit" ${S.filtre.yanit ? 'checked' : ''}><span></span></label></div>
+    <div class="anahtar"><span>Sayfanın kendi yorumlarını çıkar</span><label class="dugme"><input type="checkbox" id="fSayfa" ${S.filtre.sayfaHaric ? 'checked' : ''}><span></span></label></div>
+    <input type="search" id="fAra" placeholder="İsim veya yorumda ara (ör. katıldım)" value="${e(S.filtre.ara)}" style="margin-top:8px">
+    <div class="soluk" style="margin-top:6px">Arama çekilişi ve dışa aktarmayı da sınırlar. Sadece belli bir kelimeyi yazanlar arasında çekiliş yapmak için kullan.</div>
+  </div>
+  <div class="kart" id="dListe" style="padding-top:4px;padding-bottom:4px"></div>
+  <div class="soluk" style="text-align:center">Son güncelleme: ${tarih(d.zaman)}</div>`;
+  $('#fYanit').onchange = ev => { S.filtre.yanit = ev.target.checked; listeCiz(); };
+  $('#fSayfa').onchange = ev => { S.filtre.sayfaHaric = ev.target.checked; listeCiz(); };
+  let zam; $('#fAra').oninput = ev => { clearTimeout(zam); zam = setTimeout(() => { S.filtre.ara = ev.target.value; S.gosterim = 300; listeCiz(); }, 200); };
+  $('#dCekilis').onclick = cekilisAc;
+  $('#dCsv').onclick = csvIndir;
+  $('#dPaylas').onclick = listePaylas;
+  listeCiz();
+}
+function listeCiz() {
+  const { kisiler, adsiz, yorumSay } = hesapla();
+  $('#dIstat').innerHTML = `<div><b>${kisiler.length}</b>kişi</div><div><b>${yorumSay}</b>yorum</div><div><b>${adsiz}</b>adı gelmeyen</div>`;
+  const kutu = $('#dListe');
+  if (!kisiler.length) { kutu.innerHTML = `<div class="bos">${S.detay.yorumlar.length ? 'Filtreye uyan kişi yok.' : 'Bu paylaşımda yorum yok.'}</div>`; return; }
+  const gos = kisiler.slice(0, S.gosterim);
+  kutu.innerHTML = gos.map((k, i) => `
+    <div class="kisi">
+      <div class="ust"><div class="ad"><span class="no">${i + 1}.</span>${e(k.ad)}</div>${k.yorumlar.length > 1 ? `<span class="rozet">${k.yorumlar.length} yorum</span>` : ''}</div>
+      <div class="yorum">${e(k.yorumlar[0].m) || '<i>(görsel/çıkartma)</i>'}</div>
+      <div class="tum">${k.yorumlar.map(y => `<div>${e(y.m) || '<i>(görsel/çıkartma)</i>'}<small>${tarih(y.t)}${y.y ? ' · yanıt' : ''}</small></div>`).join('')}</div>
+    </div>`).join('') + (kisiler.length > S.gosterim ? `<button class="btn ikincil tam" id="dDaha" style="margin-bottom:10px">${kisiler.length - S.gosterim} kişi daha göster</button>` : '');
+  kutu.querySelectorAll('.kisi').forEach(k => k.onclick = () => k.classList.toggle('acik'));
+  const d = $('#dDaha'); if (d) d.onclick = () => { S.gosterim += 500; listeCiz(); };
+  if (adsiz > 0 && !kutu.dataset.uyari) {
+    kutu.dataset.uyari = 1;
+    kutu.insertAdjacentHTML('beforebegin', `<div class="kart soluk" style="font-size:13px">${adsiz} yorumun yazarı Facebook tarafından gizlendi. Bu, uygulama henüz Meta onayı almadığında olur. Ayarlar sayfasında ne yapılacağı yazıyor.</div>`);
+  }
+}
+
+/* ---------- Dışa aktarma ---------- */
+function dosyaAdi(uzanti) {
+  const t = new Date(); const g = t.toISOString().slice(0, 10);
+  return `yorumlar_${g}.${uzanti}`;
+}
+function csvIndir() {
+  const { kisiler } = hesapla();
+  const h = v => '"' + String(v ?? '').replace(/"/g, '""').replace(/\r?\n/g, ' ') + '"';
+  const satirlar = [['Sıra', 'Ad Soyad', 'Facebook ID', 'Yorum Sayısı', 'İlk Yorum Tarihi', 'İlk Yorum', 'Tüm Yorumlar'].map(h).join(';')];
+  kisiler.forEach((k, i) => satirlar.push([i + 1, k.ad, k.id, k.yorumlar.length, tarih(k.yorumlar[0].t), k.yorumlar[0].m, k.yorumlar.map(y => y.m).join(' | ')].map(h).join(';')));
+  const blob = new Blob(['﻿' + satirlar.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const dosya = new File([blob], dosyaAdi('csv'), { type: 'text/csv' });
+  if (navigator.canShare && navigator.canShare({ files: [dosya] }) && matchMedia('(display-mode: standalone)').matches) {
+    navigator.share({ files: [dosya], title: 'Yorum listesi' }).catch(() => {});
+    return;
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = dosya.name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  bilgi('CSV indirildi');
+}
+async function metinPaylas(metin, baslik) {
+  if (navigator.share) { try { await navigator.share({ title: baslik, text: metin }); return; } catch (h) { if (h.name === 'AbortError') return; } }
+  try { await navigator.clipboard.writeText(metin); bilgi('Panoya kopyalandı'); }
+  catch { bilgi('Kopyalanamadı'); }
+}
+function listePaylas() {
+  const { kisiler } = hesapla();
+  const metin = `Yorum yapanlar (${kisiler.length} kişi)\n` + kisiler.map((k, i) => `${i + 1}. ${k.ad}`).join('\n');
+  metinPaylas(metin, 'Yorum yapanlar');
+}
+
+/* ---------- Çekiliş ---------- */
+function rastgele(n) { const a = new Uint32Array(1); const sinir = Math.floor(0x100000000 / n) * n; do { crypto.getRandomValues(a); } while (a[0] >= sinir); return a[0] % n; }
+function karistir(dizi) { const d = dizi.slice(); for (let i = d.length - 1; i > 0; i--) { const j = rastgele(i + 1); [d[i], d[j]] = [d[j], d[i]]; } return d; }
+function cekilisAc() {
+  const { kisiler } = hesapla();
+  if (!kisiler.length) return bilgi('Çekiliş için kişi yok');
+  $('#katman').innerHTML = `
+  <div class="perde" id="perde"><div class="pencere">
+    <h2>Çekiliş</h2>
+    <div class="soluk">${kisiler.length} katılımcı arasından. Her kişi kaç yorum yazarsa yazsın bir kez sayılır.</div>
+    <div class="yan">
+      <div><label>Kazanan</label><input type="number" id="cAsil" min="1" value="1" inputmode="numeric"></div>
+      <div><label>Yedek</label><input type="number" id="cYedek" min="0" value="0" inputmode="numeric"></div>
+    </div>
+    <div class="cark" id="cCark">🎁</div>
+    <div class="sonuc" id="cSonuc"></div>
+    <button class="btn tam" id="cCek">Çekilişi yap</button>
+    <button class="btn ikincil tam gizli" id="cPaylas">Sonucu paylaş</button>
+    <button class="btn ikincil tam" id="cKapat" style="margin-top:8px">Kapat</button>
+  </div></div>`;
+  history.pushState({ ekran: S.ekran }, '');
+  const kapat = () => history.back();
+  $('#cKapat').onclick = kapat;
+  $('#perde').onclick = ev => { if (ev.target.id === 'perde') kapat(); };
+  let sonucMetin = '';
+  $('#cCek').onclick = () => {
+    const asil = Math.max(1, parseInt($('#cAsil').value) || 1), yedek = Math.max(0, parseInt($('#cYedek').value) || 0);
+    if (asil + yedek > kisiler.length) return bilgi(`En fazla ${kisiler.length} kişi seçilebilir`);
+    const btn = $('#cCek'); btn.disabled = true; $('#cSonuc').innerHTML = ''; $('#cPaylas').classList.add('gizli');
+    const cark = $('#cCark'); let adim = 0;
+    const zam = setInterval(() => {
+      cark.textContent = kisiler[rastgele(kisiler.length)].ad;
+      if (++adim > 22) {
+        clearInterval(zam);
+        const secilen = karistir(kisiler).slice(0, asil + yedek);
+        cark.textContent = '🎉 ' + secilen[0].ad;
+        $('#cSonuc').innerHTML = secilen.map((k, i) => i < asil
+          ? `<div><span class="etiket">${asil > 1 ? (i + 1) + '. kazanan' : 'Kazanan'}</span>${e(k.ad)}</div>`
+          : `<div class="yedek"><span class="etiket">${i - asil + 1}. yedek</span>${e(k.ad)}</div>`).join('');
+        sonucMetin = `Çekiliş sonucu (${tarih(new Date())}, ${kisiler.length} katılımcı)\n\n`
+          + secilen.map((k, i) => i < asil ? `🏆 ${asil > 1 ? (i + 1) + '. ' : ''}Kazanan: ${k.ad}` : `${i - asil + 1}. Yedek: ${k.ad}`).join('\n');
+        btn.disabled = false; btn.textContent = 'Tekrar çek';
+        $('#cPaylas').classList.remove('gizli');
+      }
+    }, 70);
+  };
+  $('#cPaylas').onclick = () => metinPaylas(sonucMetin, 'Çekiliş sonucu');
+}
+
+/* ---------- Ayarlar ---------- */
+function cizAyarlar() {
+  ustBar('Ayarlar', { geri: true });
+  const kurulabilir = S.yuklemeIstemi && !matchMedia('(display-mode: standalone)').matches;
+  icerik.innerHTML = `
+  <div class="kart"><h2>Bağlı sayfa</h2><div>${e(S.durum?.sayfa?.ad || '-')}</div><div class="soluk">ID: ${e(S.durum?.sayfa?.id || '-')}</div></div>
+  ${kurulabilir ? `<button class="btn tam" id="aKur" style="margin:0 0 12px">📲 Ana ekrana uygulama olarak ekle</button>` : ''}
+  <details class="kart"><summary>Facebook bağlantısını değiştir / yenile</summary><div style="margin-top:10px">${baglantiFormuHtml()}</div>
+    <div id="aBHata"></div><button class="btn tam" id="aBKaydet">Bağlantıyı kaydet</button></details>
+  <details class="kart"><summary>Şifre değiştir</summary>
+    <label>Mevcut şifre</label><input type="password" id="aEski" autocomplete="current-password">
+    <label>Yeni şifre</label><input type="password" id="aYeni" autocomplete="new-password">
+    <div id="aSHata"></div><button class="btn tam" id="aSKaydet">Şifreyi değiştir</button></details>
+  <details class="kart"><summary>Bazı isimler neden gelmiyor?</summary>
+    <p style="font-size:14px">Facebook, uygulaman Meta incelemesinden geçmeden sayfa yöneticisi olmayan kişilerin adını göstermiyor. Tüm isimleri görmek için:</p>
+    <ol class="adim">
+      <li>developers.facebook.com'da uygulamanı aç, <b>Uygulama İncelemesi</b> bölümüne gir.</li>
+      <li><code>pages_read_user_content</code> ve <code>pages_read_engagement</code> için gelişmiş erişim iste.</li>
+      <li>Meta genelde işletme doğrulaması ve kısa bir kullanım açıklaması ister. Onay gelince uygulamayı <b>Canlı</b> moda al.</li>
+    </ol></details>
+  <button class="btn tehlike tam" id="aCikis">Çıkış yap</button>`;
+  const al = baglantiFormuBagla();
+  $('#aBKaydet').onclick = async () => {
+    const btn = $('#aBKaydet'); $('#aBHata').innerHTML = '';
+    try { const b = al(); btn.disabled = true; S.durum = await api('kaydet', b); S.listeYuklendi = false; bilgi('Bağlantı kaydedildi: ' + S.durum.sayfa.ad); cizAyarlar(); }
+    catch (h) { $('#aBHata').innerHTML = `<div class="hata">${e(h.message)}</div>`; btn.disabled = false; }
+  };
+  $('#aSKaydet').onclick = async () => {
+    const btn = $('#aSKaydet'); $('#aSHata').innerHTML = ''; btn.disabled = true;
+    try { S.durum = await api('sifre_degistir', { eski: $('#aEski').value, yeni: $('#aYeni').value }); bilgi('Şifre değişti'); cizAyarlar(); }
+    catch (h) { $('#aSHata').innerHTML = `<div class="hata">${e(h.message)}</div>`; btn.disabled = false; }
+  };
+  $('#aCikis').onclick = async () => { try { S.durum = await api('cikis'); } catch {} S.listeYuklendi = false; S.paylasimlar = []; git('giris', true); };
+  const k = $('#aKur'); if (k) k.onclick = async () => { S.yuklemeIstemi.prompt(); await S.yuklemeIstemi.userChoice; S.yuklemeIstemi = null; cizAyarlar(); };
+}
+
+/* ---------- Başlangıç ---------- */
+window.addEventListener('beforeinstallprompt', ev => { ev.preventDefault(); S.yuklemeIstemi = ev; });
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+(async () => {
+  try {
+    S.durum = await api('durum');
+    git(!S.durum.kurulu ? 'kurulum' : !S.durum.girisli ? 'giris' : 'liste', true);
+  } catch (h) {
+    icerik.innerHTML = `<div class="hata">${e(h.message)}</div><button class="btn tam" onclick="location.reload()">Tekrar dene</button>`;
+  }
+})();
+</script>
+</body>
+</html>

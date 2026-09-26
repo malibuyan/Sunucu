@@ -1,0 +1,42 @@
+#!/bin/bash
+# Yayın Paneli HTTPS yardımcısı — panel bunu sudo ile çağırır.
+# Kullanım: yayin-ssl alan.adi.com
+set -euo pipefail
+ALAN="${1:-}"
+ALAN="${ALAN,,}"
+if ! [[ "$ALAN" =~ ^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$ ]] || [ ${#ALAN} -gt 200 ]; then
+  echo "HATA: Geçersiz alan adı: $ALAN"; exit 2
+fi
+SOCK=$(cat /etc/yayin/php-sock)
+IP=$(curl -4 -fs -m 8 https://api.ipify.org || curl -4 -fs -m 8 https://ifconfig.me || true)
+[[ "$IP" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]] || IP=$(cat /etc/yayin/ip 2>/dev/null || true)
+COZ=$(getent ahostsv4 "$ALAN" | awk '{print $1; exit}' || true)
+if [ -z "$COZ" ]; then
+  echo "HATA: $ALAN adresi henüz hiçbir IP'ye yönlenmiyor. DNS'te A kaydı ekleyip (değer: ${IP:-sunucu IP}) birkaç dakika bekle."; exit 3
+fi
+if [ -n "$IP" ] && [ "$COZ" != "$IP" ]; then
+  echo "HATA: $ALAN şu an $COZ adresine yönleniyor, bu sunucu ise $IP. DNS A kaydını $IP yap."; exit 3
+fi
+CONF="/etc/nginx/sites-available/yayin-$ALAN"
+if [ ! -f "$CONF" ]; then
+  V6=""; [ -s /proc/net/if_inet6 ] && V6="listen [::]:80;"
+  cat > "$CONF" <<NGX
+server {
+    listen 80;
+    $V6
+    server_name $ALAN;
+    include /etc/nginx/snippets/yayin-ortak.conf;
+}
+NGX
+  ln -sf "$CONF" "/etc/nginx/sites-enabled/yayin-$ALAN"
+fi
+nginx -t 2>&1 | tail -1
+nginx -s reload 2>/dev/null || systemctl reload nginx
+if certbot --nginx -d "$ALAN" --non-interactive --agree-tos --register-unsafely-without-email --redirect 2>&1 | tail -5; then
+  if grep -q "ssl_certificate" "$CONF"; then
+    grep -qx "$ALAN" /etc/yayin/alanlar 2>/dev/null || echo "$ALAN" >> /etc/yayin/alanlar
+    echo "TAMAM: https://$ALAN hazır."
+    exit 0
+  fi
+fi
+echo "HATA: Sertifika alınamadı. 80 ve 443 portlarının açık olduğundan emin ol."; exit 4

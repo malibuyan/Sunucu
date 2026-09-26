@@ -1,0 +1,5 @@
+# Sunucudaki gizli ayarlar asla repoya girmez
+**/veri/*.php
+**/veri/*.json
+**/veri/*.txt
+yayin-paneli/dist/

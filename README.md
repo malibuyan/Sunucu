@@ -18,7 +18,7 @@ Uygulamaların `veri/` klasörü sunucuda kalır; ayarlar ve anahtarlar bu repoy
 Ubuntu 22.04/24.04 sunucuda root olarak:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/KULLANICI/REPO/main/kur.sh -o /tmp/kur.sh && bash /tmp/kur.sh
+curl -fsSL https://raw.githubusercontent.com/malibuyan/sunucu/main/kur.sh -o /tmp/kur.sh && bash /tmp/kur.sh
 ```
 
 Kurulum sonunda panel adresi ve şifresi ekrana yazılır (`cat /root/yayin-bilgi.txt` ile tekrar görülebilir).
@@ -28,7 +28,7 @@ Kurulum sonunda panel adresi ve şifresi ekrana yazılır (`cat /root/yayin-bilg
 Panel → **GitHub** → Repo bağla:
 
 - Uygulama adı: `yorumlar`
-- Repo adresi: `https://github.com/KULLANICI/REPO`
+- Repo adresi: `https://github.com/malibuyan/sunucu`
 - Dal: `main`
 - Klasör: `uygulamalar/yorumlar`
 

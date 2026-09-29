@@ -13,6 +13,14 @@ Mehmet Ali'nin VPS'inde çalışan uygulamalar ve onları yayınlayan **Yayın P
 Bu repoya yapılan her gönderim, Yayın Paneli tarafından 5 dakika içinde (webhook varsa hemen) sunucuya yayınlanır.
 Uygulamaların `veri/` klasörü sunucuda kalır; ayarlar ve anahtarlar bu repoya **hiçbir zaman** girmez.
 
+## Bilgisayar sürümü (sunucusuz)
+
+`pc/yorum-listeleyici.html` tek başına çalışır: dosyayı indirip Chrome veya Edge ile açmak yeterli.
+Tarayıcı Facebook'a doğrudan bağlanır; VPS, PHP veya kurulum gerekmez. Sayfa anahtarı yalnızca
+o bilgisayarın tarayıcısında saklanır, dosyanın içinde değildir.
+
+Mobil/VPS sürümü (`uygulamalar/yorumlar` + Yayın Paneli) şimdilik beklemede.
+
 ## Sunucuya ilk kurulum
 
 Ubuntu 22.04/24.04 sunucuda root olarak:

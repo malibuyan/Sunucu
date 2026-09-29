@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yorum Listeleyici</title>
+<style>
+:root{
+  --ana:#4f46e5; --ana-2:#4338ca; --ana-acik:#eef2ff;
+  --zemin:#f4f4f7; --kart:#ffffff; --yazi:#16161d; --soluk:#6b6b78; --cizgi:#e4e4ea;
+  --kirmizi:#b91c1c; --kirmizi-z:#fee2e2; --sari:#92400e; --sari-z:#fef3c7;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --ana:#818cf8; --ana-2:#6366f1; --ana-acik:#23234a; --zemin:#0f0f13; --kart:#1a1a21; --yazi:#ececf1; --soluk:#9a9aa8; --cizgi:#2b2b35;
+    --kirmizi:#fca5a5; --kirmizi-z:#3b1414; --sari:#fcd34d; --sari-z:#3a2a0a; color-scheme:dark }
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--zemin);color:var(--yazi);font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+button,input,textarea{font:inherit;color:inherit}
+a{color:var(--ana)}
+header{position:sticky;top:0;z-index:10;background:var(--ana-2);color:#fff;box-shadow:0 1px 0 rgba(0,0,0,.08)}
+@media (prefers-color-scheme: dark){header{background:#1e1b4b}}
+.ust-ic{max-width:1180px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;gap:6px;min-height:56px}
+header h1{font-size:17px;margin:0 0 0 4px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.ikon-btn{background:none;border:0;color:inherit;height:38px;padding:0 12px;border-radius:8px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:14px}
+.ikon-btn:hover{background:rgba(255,255,255,.14)}
+.ikon-btn svg{width:20px;height:20px}
+main{max-width:1180px;margin:0 auto;padding:20px}
+.dar{max-width:620px;margin:0 auto}
+.kart{background:var(--kart);border:1px solid var(--cizgi);border-radius:12px;padding:16px;margin-bottom:12px}
+.kart h2{font-size:16px;margin:0 0 10px}
+.soluk{color:var(--soluk);font-size:13px}
+label{display:block;font-size:14px;font-weight:600;margin:12px 0 4px}
+input[type=text],input[type=password],input[type=number],input[type=search],textarea{
+  width:100%;padding:10px 12px;border:1px solid var(--cizgi);border-radius:8px;background:var(--zemin);font-size:15px;outline:none}
+input:focus,textarea:focus{border-color:var(--ana)}
+textarea{min-height:80px;resize:vertical;font-size:13px;word-break:break-all}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--ana-2);color:#fff;border:0;border-radius:8px;padding:10px 16px;font-weight:600;cursor:pointer;text-decoration:none;min-height:40px}
+.btn:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.55;cursor:default}
+.btn:focus-visible,.ikon-btn:focus-visible,.post:focus-visible{outline:3px solid var(--ana);outline-offset:2px}
+.btn.tam{width:100%;margin-top:14px}
+.btn.ikincil{background:var(--ana-acik);color:var(--ana)}
+.btn.tehlike{background:var(--kirmizi-z);color:var(--kirmizi)}
+.btn svg{width:18px;height:18px}
+.hata{background:var(--kirmizi-z);color:var(--kirmizi);border-radius:8px;padding:12px;margin:10px 0;font-size:14px}
+.uyari{background:var(--sari-z);color:var(--sari);border-radius:8px;padding:12px;margin:10px 0;font-size:14px}
+.sekme{display:flex;background:var(--zemin);border-radius:8px;padding:4px;gap:4px;margin-bottom:6px}
+.sekme button{flex:1;border:0;background:none;padding:8px 6px;border-radius:6px;font-size:14px;font-weight:600;color:var(--soluk);cursor:pointer}
+.sekme button.aktif{background:var(--kart);color:var(--ana)}
+details{margin-top:8px}
+summary{cursor:pointer;color:var(--ana);font-size:14px;font-weight:600}
+ol.adim{padding-left:20px;font-size:14px;margin:8px 0}
+ol.adim li{margin-bottom:6px}
+code{background:var(--zemin);padding:1px 5px;border-radius:5px;font-size:13px}
+.secim{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--cizgi);border-radius:8px;margin-top:8px;cursor:pointer}
+.secim:hover{border-color:var(--ana)}
+.secim input{width:18px;height:18px;accent-color:var(--ana)}
+
+/* paylaşımlar: masaüstünde ızgara */
+.izgara{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.izgara .kart{margin:0}
+.post{display:flex;gap:12px;cursor:pointer;align-items:flex-start;transition:border-color .15s}
+.post:hover{border-color:var(--ana)}
+.post img{width:76px;height:76px;border-radius:8px;object-fit:cover;flex:none;background:var(--zemin)}
+.post .metin{flex:1;min-width:0}
+.post .ozet{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.post .alt{display:flex;justify-content:space-between;margin-top:6px;gap:8px}
+.rozet{background:var(--ana-acik);color:var(--ana);border-radius:20px;padding:1px 10px;font-size:13px;font-weight:600;white-space:nowrap}
+.ust-satir{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.ust-satir input{flex:1;min-width:220px}
+
+/* detay: masaüstünde iki sütun */
+.duzen{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start}
+.yan{position:sticky;top:76px}
+@media (max-width:860px){.duzen{grid-template-columns:1fr}.yan{position:static}}
+.istat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.istat div{background:var(--kart);border:1px solid var(--cizgi);border-radius:10px;padding:10px 4px;text-align:center;font-size:13px;color:var(--soluk)}
+.istat b{display:block;font-size:22px;color:var(--ana);line-height:1.2;font-variant-numeric:tabular-nums}
+.anahtar{display:flex;align-items:center;justify-content:space-between;padding:8px 0;gap:10px;cursor:pointer}
+.anahtar+.anahtar{border-top:1px solid var(--cizgi)}
+.dugme{position:relative;width:42px;height:24px;flex:none}
+.dugme input{opacity:0;width:0;height:0}
+.dugme span{position:absolute;inset:0;background:var(--cizgi);border-radius:20px;transition:.2s}
+.dugme span:before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.dugme input:checked+span{background:var(--ana-2)}
+.dugme input:checked+span:before{transform:translateX(18px)}
+.dugme input:focus-visible+span{outline:3px solid var(--ana);outline-offset:2px}
+.eylemler{display:flex;flex-direction:column;gap:8px}
+.eylemler .btn{justify-content:flex-start}
+.tablo{width:100%;border-collapse:collapse}
+.tablo th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--soluk);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--cizgi);background:var(--kart)}
+.tablo td{padding:9px 10px;border-bottom:1px solid var(--cizgi);vertical-align:top}
+.tablo tr.kisi{cursor:pointer}
+.tablo tr.kisi:hover td{background:var(--zemin)}
+.tablo td.no{color:var(--soluk);width:48px;font-variant-numeric:tabular-nums}
+.tablo td.ad{font-weight:600;width:28%;word-break:break-word}
+.tablo td.yorum{color:var(--soluk);word-break:break-word}
+.tablo td.say{width:70px;text-align:right}
+.tablo tr:not(.acik) .yorum .tum{display:none}
+.tablo tr.acik .yorum .ilk{display:none}
+.tum div{padding:6px 10px;background:var(--zemin);border-radius:6px;margin-bottom:4px;color:var(--yazi)}
+.tum small{display:block;color:var(--soluk);font-size:12px}
+.ilk{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.post-baslik{display:flex;gap:12px}
+.post-baslik img{width:60px;height:60px;border-radius:8px;object-fit:cover;flex:none}
+.post-baslik .ozet{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:14px}
+
+.perde{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;display:grid;place-items:center;padding:20px}
+.pencere{background:var(--kart);width:100%;max-width:520px;border-radius:14px;padding:22px;max-height:90vh;overflow:auto}
+.pencere h2{margin:0 0 6px;font-size:19px}
+.iki{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cark{font-size:24px;font-weight:700;text-align:center;padding:22px 8px;min-height:84px;color:var(--ana);word-break:break-word}
+.sonuc div{display:flex;gap:10px;align-items:center;padding:9px 12px;border-radius:8px;background:var(--zemin);margin-top:6px;font-weight:600}
+.sonuc .etiket{font-size:12px;font-weight:700;padding:2px 8px;border-radius:12px;background:var(--ana-2);color:#fff;white-space:nowrap}
+.sonuc .yedek .etiket{background:var(--soluk)}
+.bilgi{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;z-index:60;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.yukleniyor{display:flex;flex-direction:column;align-items:center;gap:12px;padding:60px 0;color:var(--soluk);text-align:center}
+.donen{width:34px;height:34px;border:3px solid var(--cizgi);border-top-color:var(--ana);border-radius:50%;animation:don .8s linear infinite}
+@keyframes don{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){.donen{animation-duration:3s}}
+.bos{text-align:center;color:var(--soluk);padding:30px 10px}
+.gizli{display:none!important}
+</style>
+</head>
+<body>
+<header><div class="ust-ic">
+  <button class="ikon-btn gizli" id="geriBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>Paylaşımlar</button>
+  <h1 id="baslik">Yorum Listeleyici</h1>
+  <button class="ikon-btn gizli" id="yenileBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>Yenile</button>
+  <button class="ikon-btn gizli" id="ayarBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>Ayarlar</button>
+</div></header>
+<main id="icerik"></main>
+<div id="katman"></div>
+
+<script>
+'use strict';
+/*
+ * Yorum Listeleyici — bilgisayar sürümü
+ * Sunucu gerekmez: tarayıcı Facebook'a doğrudan bağlanır.
+ * Sayfa anahtarı yalnızca bu bilgisayardaki tarayıcıda saklanır.
+ */
+const GRAPH = 'https://graph.facebook.com/v23.0/';
+const DEPO = 'yorumListeleyici.v1';
+
+const S = {
+  ayar: null, ekran: 'kurulum',
+  paylasimlar: [], sonraki: null, listeYuklendi: false,
+  detay: null, filtre: { yanit: true, sayfaHaric: true, ara: '' }, gosterim: 500,
+};
+const $ = s => document.querySelector(s);
+const icerik = $('#icerik');
+const e = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const kucuk = s => String(s ?? '').toLocaleLowerCase('tr');
+const tarih = t => t ? new Date(t).toLocaleString('tr-TR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '';
+const yukleniyorHtml = m => `<div class="yukleniyor"><div class="donen"></div><div id="ilerleme">${e(m || '')}</div></div>`;
+
+function bilgi(m, sure = 2600) {
+  const d = document.createElement('div'); d.className = 'bilgi'; d.textContent = m;
+  document.body.appendChild(d); setTimeout(() => d.remove(), sure);
+}
+
+/* ---------- Kalıcı ayar (bu bilgisayarda) ---------- */
+function ayarOku() { try { return JSON.parse(localStorage.getItem(DEPO) || 'null'); } catch { return null; } }
+function ayarYaz(a) {
+  try { a ? localStorage.setItem(DEPO, JSON.stringify(a)) : localStorage.removeItem(DEPO); }
+  catch { bilgi('Ayar kaydedilemedi. Tarayıcı gizli modda olabilir; bağlantı sayfa kapanınca unutulur.', 5000); }
+  S.ayar = a;
+}
+
+/* ---------- Facebook Graph API ---------- */
+async function fb(yol, par = {}, token = S.ayar?.token) {
+  const tk = par.access_token ?? token;
+  const url = /^https?:/.test(yol) ? yol : GRAPH + yol + '?' + new URLSearchParams({ ...par, ...(tk ? { access_token: tk } : {}) });
+  let r;
+  try { r = await fetch(url); }
+  catch { throw new Error('Facebook\'a bağlanılamadı. İnternet bağlantını kontrol et. Sorun sürerse dosyayı Chrome veya Edge ile aç.'); }
+  let j; try { j = await r.json(); } catch { throw new Error('Facebook\'tan anlaşılmayan yanıt geldi (HTTP ' + r.status + ').'); }
+  if (j.error) {
+    const k = j.error.code, m = j.error.message || 'bilinmeyen hata';
+    if (k === 190) { const h = new Error('Facebook anahtarı geçersiz veya süresi dolmuş. Ayarlar\'dan bağlantıyı yenile. (' + m + ')'); h.kod = 'token'; throw h; }
+    if ([4, 17, 32, 613].includes(k)) throw new Error('Facebook istek sınırına takıldı, birkaç dakika sonra tekrar dene.');
+    const h = new Error('Facebook hatası: ' + m); h.fbKod = k; throw h;
+  }
+  return j;
+}
+async function fbHepsi(yol, par, maxSayfa, ilerle) {
+  let j = await fb(yol, par);
+  const tum = [...(j.data || [])];
+  ilerle && ilerle(tum.length);
+  for (let i = 1; i < maxSayfa && j.paging?.next; i++) {
+    j = await fb(j.paging.next);
+    tum.push(...(j.data || []));
+    ilerle && ilerle(tum.length);
+  }
+  return tum;
+}
+async function sayfaDogrula(token) {
+  const me = await fb('me', { fields: 'id,name' }, token);
+  try { const k = await fb('me', { fields: 'category' }, token); if (!k.category) throw 0; }
+  catch { throw new Error('Bu bir sayfa anahtarı değil. Kişisel hesap anahtarı girilmiş olabilir.'); }
+  return { id: String(me.id), ad: me.name };
+}
+
+/* ---------- Gezinme ---------- */
+function git(ekran, degistir = false) {
+  S.ekran = ekran;
+  try { degistir ? history.replaceState({ ekran }, '') : history.pushState({ ekran }, ''); } catch {}
+  ciz();
+}
+window.addEventListener('popstate', ev => {
+  if ($('#katman').innerHTML) { $('#katman').innerHTML = ''; return; }
+  const h = ev.state?.ekran;
+  S.ekran = !S.ayar ? 'kurulum' : (h && h !== 'kurulum' ? h : 'liste');
+  if (S.ekran === 'detay' && !S.detay) S.ekran = 'liste';
+  ciz();
+});
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && $('#katman').innerHTML) geri(); });
+function geri() { if (history.length > 1) { try { history.back(); return; } catch {} } $('#katman').innerHTML = ''; git('liste', true); }
+$('#geriBtn').onclick = geri;
+$('#ayarBtn').onclick = () => git('ayarlar');
+$('#yenileBtn').onclick = () => {
+  if (S.ekran === 'detay' && S.detay?.post) detayAc(S.detay.post.id, true);
+  else { S.listeYuklendi = false; S.paylasimlar = []; ciz(); }
+};
+function ustBar(baslik, { geri = false, yenile = false, ayar = false } = {}) {
+  $('#baslik').textContent = baslik;
+  document.title = baslik === 'Yorum Listeleyici' ? baslik : baslik + ' · Yorum Listeleyici';
+  $('#geriBtn').classList.toggle('gizli', !geri);
+  $('#yenileBtn').classList.toggle('gizli', !yenile);
+  $('#ayarBtn').classList.toggle('gizli', !ayar);
+}
+function ciz() {
+  window.scrollTo(0, 0);
+  ({ kurulum: cizKurulum, liste: cizListe, detay: cizDetay, ayarlar: cizAyarlar }[S.ekran] || cizListe)();
+}
+
+/* ---------- Facebook bağlantı formu ---------- */
+function baglantiFormuHtml() {
+  return `
+  <div class="sekme" id="bSekme">
+    <button data-s="kolay" class="aktif" type="button">Kolay kurulum</button>
+    <button data-s="token" type="button">Sayfa anahtarım var</button>
+  </div>
+  <div id="bKolay">
+    <label for="bAppId">Uygulama Kimliği (App ID)</label><input type="text" id="bAppId" autocomplete="off">
+    <label for="bSecret">Uygulama Gizli Anahtarı (App Secret)</label><input type="password" id="bSecret" autocomplete="off">
+    <label for="bKisa">Kullanıcı erişim anahtarı</label><textarea id="bKisa" placeholder="EAA... ile başlayan anahtar"></textarea>
+    <details><summary>Bu bilgileri nereden bulurum?</summary>
+      <ol class="adim">
+        <li><a href="https://developers.facebook.com/apps" target="_blank" rel="noopener">developers.facebook.com/apps</a> adresinde <b>Uygulama Oluştur</b> de, türü <b>İşletme</b> seç.</li>
+        <li>Uygulamada <b>Ayarlar &gt; Temel</b> sayfasından <b>Uygulama Kimliği</b> ve <b>Uygulama Gizli Anahtarı</b>nı kopyala.</li>
+        <li><a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener">Graph API Explorer</a>'ı aç, sağ üstten uygulamanı seç.</li>
+        <li>İzinlere <code>pages_show_list</code>, <code>pages_read_engagement</code>, <code>pages_read_user_content</code> ekle.</li>
+        <li><b>Generate Access Token</b> de, açılan pencerede sayfanı seçip onayla. Çıkan anahtarı buraya yapıştır.</li>
+      </ol>
+      <div class="soluk">Anahtar süresiz bir sayfa anahtarına çevrilir. App Secret hiçbir yere kaydedilmez.</div>
+    </details>
+    <button class="btn ikincil tam" id="bGetir" type="button">Sayfalarımı getir</button>
+    <div id="bSayfalar"></div>
+  </div>
+  <div id="bToken" class="gizli">
+    <label for="bSayfaToken">Sayfa erişim anahtarı</label><textarea id="bSayfaToken" placeholder="EAA..."></textarea>
+    <div class="soluk">Kısa süreli anahtar girersen birkaç saat sonra yenilemen gerekir. Süresiz anahtar için Kolay kurulumu kullan.</div>
+  </div>`;
+}
+function baglantiFormuBagla() {
+  let sekme = 'kolay', sayfalar = [];
+  document.querySelectorAll('#bSekme button').forEach(b => b.onclick = () => {
+    sekme = b.dataset.s;
+    document.querySelectorAll('#bSekme button').forEach(x => x.classList.toggle('aktif', x === b));
+    $('#bKolay').classList.toggle('gizli', sekme !== 'kolay');
+    $('#bToken').classList.toggle('gizli', sekme !== 'token');
+  });
+  $('#bGetir').onclick = async () => {
+    const btn = $('#bGetir'); btn.disabled = true; btn.textContent = 'Getiriliyor…';
+    try {
+      const appId = $('#bAppId').value.trim(), secret = $('#bSecret').value.trim(), kisa = $('#bKisa').value.trim();
+      if (!appId || !secret || !kisa) throw new Error('Üç alanı da doldur.');
+      const uzun = await fb('oauth/access_token', { grant_type: 'fb_exchange_token', client_id: appId, client_secret: secret, fb_exchange_token: kisa }, null);
+      if (!uzun.access_token) throw new Error('Uzun süreli anahtar alınamadı.');
+      const hesaplar = await fbHepsi('me/accounts', { fields: 'id,name,access_token', limit: 100, access_token: uzun.access_token }, 5);
+      sayfalar = hesaplar.filter(h => h.access_token).map(h => ({ id: String(h.id), ad: h.name, token: h.access_token }));
+      if (!sayfalar.length) throw new Error('Bu hesapla yönetilen sayfa bulunamadı. Anahtarı alırken sayfayı seçtiğinden ve pages_show_list iznini verdiğinden emin ol.');
+      $('#bSayfalar').innerHTML = '<label>Sayfanı seç</label>' + sayfalar.map((s, i) =>
+        `<label class="secim"><input type="radio" name="bSayfa" value="${i}" ${i === 0 ? 'checked' : ''}> ${e(s.ad)}</label>`).join('');
+    } catch (h) { $('#bSayfalar').innerHTML = `<div class="hata">${e(h.message)}</div>`; }
+    btn.disabled = false; btn.textContent = 'Sayfalarımı getir';
+  };
+  return async () => {
+    let token;
+    if (sekme === 'token') {
+      token = $('#bSayfaToken').value.trim();
+      if (!token) throw new Error('Sayfa anahtarını yapıştır.');
+    } else {
+      const s = document.querySelector('input[name=bSayfa]:checked');
+      if (!s) throw new Error('Önce "Sayfalarımı getir" ile sayfanı seç.');
+      token = sayfalar[+s.value].token;
+    }
+    const sayfa = await sayfaDogrula(token);
+    return { token, sayfa };
+  };
+}
+
+/* ---------- Kurulum ---------- */
+function cizKurulum() {
+  ustBar('Yorum Listeleyici');
+  icerik.innerHTML = `<div class="dar">
+  <div class="kart">
+    <h2>Facebook sayfanı bağla</h2>
+    <p class="soluk" style="margin-top:0">Bir kez yapılır. Bağlantı bilgisi yalnızca bu bilgisayardaki tarayıcıda saklanır, hiçbir sunucuya gönderilmez.</p>
+    ${baglantiFormuHtml()}
+    <div id="kHata"></div>
+    <button class="btn tam" id="kKaydet" type="button">Bağlan</button>
+  </div></div>`;
+  const al = baglantiFormuBagla();
+  $('#kKaydet').onclick = async () => {
+    const btn = $('#kKaydet'); $('#kHata').innerHTML = ''; btn.disabled = true; btn.textContent = 'Bağlanıyor…';
+    try { ayarYaz(await al()); bilgi('Bağlandı: ' + S.ayar.sayfa.ad); git('liste', true); }
+    catch (h) { $('#kHata').innerHTML = `<div class="hata">${e(h.message)}</div>`; btn.disabled = false; btn.textContent = 'Bağlan'; }
+  };
+}
+
+/* ---------- Paylaşım listesi ---------- */
+function postKart(p) {
+  return `<div class="kart post" data-id="${e(p.id)}" tabindex="0" role="button">
+    ${p.full_picture ? `<img src="${e(p.full_picture)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ''}
+    <div class="metin">
+      <div class="ozet">${e(p.message || p.story) || '<span class="soluk">(metinsiz paylaşım)</span>'}</div>
+      <div class="alt"><span class="soluk">${tarih(p.created_time)}</span><span class="rozet">${p.comments?.summary?.total_count ?? 0} yorum</span></div>
+    </div></div>`;
+}
+async function paylasimGetir(sonraki) {
+  const par = { fields: 'id,message,story,created_time,permalink_url,full_picture,comments.summary(true).limit(0)', limit: 24 };
+  if (sonraki) par.after = sonraki;
+  const j = await fb('me/posts', par);
+  return { liste: j.data || [], sonraki: j.paging?.next ? j.paging?.cursors?.after : null };
+}
+async function cizListe() {
+  ustBar(S.ayar?.sayfa?.ad || 'Paylaşımlar', { yenile: true, ayar: true });
+  const ust = `<div class="ust-satir">
+    <input type="text" id="lId" placeholder="Paylaşım bağlantısını veya ID'sini yapıştır ya da aşağıdan seç">
+    <button class="btn ikincil" id="lAc" type="button">Yorumları getir</button></div>`;
+  const bagla = () => {
+    document.querySelectorAll('.post').forEach(k => {
+      k.onclick = () => detayAc(k.dataset.id);
+      k.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); detayAc(k.dataset.id); } };
+    });
+    const ac = () => { const v = $('#lId').value.trim(); if (v) detayAc(v); };
+    $('#lAc').onclick = ac; $('#lId').onkeydown = ev => { if (ev.key === 'Enter') ac(); };
+    const d = $('#lDaha');
+    if (d) d.onclick = async () => {
+      d.disabled = true; d.textContent = 'Yükleniyor…';
+      try { const j = await paylasimGetir(S.sonraki); S.paylasimlar.push(...j.liste); S.sonraki = j.sonraki; ciz2(); }
+      catch (h) { bilgi(h.message); d.disabled = false; d.textContent = 'Daha eski paylaşımlar'; }
+    };
+  };
+  const ciz2 = () => {
+    icerik.innerHTML = ust + (S.paylasimlar.length ? `<div class="izgara">${S.paylasimlar.map(postKart).join('')}</div>` : '<div class="kart bos">Paylaşım bulunamadı.</div>')
+      + (S.sonraki ? '<div style="text-align:center;margin-top:16px"><button class="btn ikincil" id="lDaha" type="button">Daha eski paylaşımlar</button></div>' : '');
+    bagla();
+  };
+  if (S.listeYuklendi) return ciz2();
+  icerik.innerHTML = ust + yukleniyorHtml('Paylaşımlar getiriliyor…'); bagla();
+  try {
+    const j = await paylasimGetir();
+    S.paylasimlar = j.liste; S.sonraki = j.sonraki; S.listeYuklendi = true;
+    if (S.ekran === 'liste') ciz2();
+  } catch (h) {
+    if (S.ekran === 'liste') { icerik.innerHTML = ust + `<div class="hata">${e(h.message)}</div>`; bagla(); }
+  }
+}
+
+/* ---------- Yorumlar ---------- */
+function postIdCoz(ham) {
+  ham = ham.trim();
+  const sid = S.ayar.sayfa.id;
+  if (/^\d+_\d+$/.test(ham)) return ham;
+  if (/^\d+$/.test(ham)) return sid + '_' + ham;
+  const m = ham.match(/(?:\/posts\/|story_fbid=|fbid=|\/videos\/|\/photos\/[^/]+\/)(\d+)/);
+  if (m) return sid + '_' + m[1];
+  if (ham.includes('pfbid')) throw new Error('Bu tür (pfbid) bağlantılar çözülemiyor. Paylaşımı listeden seç.');
+  throw new Error('Paylaşım kimliği anlaşılamadı.');
+}
+async function detayAc(id, yenile = false) {
+  if (!yenile) git('detay');
+  S.detay = { yukleniyor: true }; S.gosterim = 500;
+  cizDetay();
+  try {
+    const postId = postIdCoz(id);
+    const post = await fb(postId, { fields: 'id,message,story,created_time,permalink_url,full_picture' });
+    const ham = await fbHepsi(postId + '/comments', {
+      fields: 'id,message,created_time,from{id,name},parent{id}', filter: 'stream', order: 'chronological', limit: 100,
+    }, 400, n => { const el = $('#ilerleme'); if (el) el.textContent = n + ' yorum çekildi…'; });
+    S.detay = {
+      post, sayfaId: S.ayar.sayfa.id, zaman: new Date().toISOString(),
+      yorumlar: ham.map(y => ({ k: y.from?.id ?? null, a: y.from?.name?.trim() ?? null, m: y.message || '', t: y.created_time || '', y: !!y.parent })),
+    };
+  } catch (h) { S.detay = { hata: h.message }; }
+  if (S.ekran === 'detay') cizDetay();
+}
+function hesapla() {
+  const d = S.detay, f = S.filtre, harita = new Map();
+  let adsiz = 0, yorumSay = 0;
+  for (const y of d.yorumlar) {
+    if (!f.yanit && y.y) continue;
+    if (f.sayfaHaric && y.k === d.sayfaId) continue;
+    yorumSay++;
+    if (!y.k) { adsiz++; continue; }
+    let p = harita.get(y.k);
+    if (!p) { p = { id: y.k, ad: y.a || '(isimsiz)', yorumlar: [] }; harita.set(y.k, p); }
+    p.yorumlar.push(y);
+  }
+  let kisiler = [...harita.values()];
+  const q = kucuk(f.ara.trim());
+  if (q) {
+    kisiler = kisiler.filter(p => kucuk(p.ad).includes(q) || p.yorumlar.some(y => kucuk(y.m).includes(q)));
+    yorumSay = kisiler.reduce((t, p) => t + p.yorumlar.length, 0);
+  }
+  return { kisiler, adsiz, yorumSay };
+}
+function cizDetay() {
+  ustBar('Yorumlar', { geri: true, yenile: true, ayar: true });
+  const d = S.detay;
+  if (!d || d.yukleniyor) { icerik.innerHTML = yukleniyorHtml('Tüm yorumlar çekiliyor…'); return; }
+  if (d.hata) { icerik.innerHTML = `<div class="dar"><div class="hata">${e(d.hata)}</div><button class="btn ikincil" onclick="history.back()">Geri dön</button></div>`; return; }
+  const p = d.post;
+  icerik.innerHTML = `<div class="duzen">
+  <aside class="yan">
+    <div class="kart post-baslik">
+      ${p.full_picture ? `<img src="${e(p.full_picture)}" alt="" referrerpolicy="no-referrer">` : ''}
+      <div style="min-width:0;flex:1"><div class="ozet">${e(p.message || p.story) || '(metinsiz paylaşım)'}</div>
+        <div class="soluk">${tarih(p.created_time)}${p.permalink_url ? ` · <a href="${e(p.permalink_url)}" target="_blank" rel="noopener">Facebook'ta aç</a>` : ''}</div></div>
+    </div>
+    <div class="istat" id="dIstat"></div>
+    <div class="kart">
+      <label class="anahtar"><span>Yanıtları dahil et</span><span class="dugme"><input type="checkbox" id="fYanit" ${S.filtre.yanit ? 'checked' : ''}><span></span></span></label>
+      <label class="anahtar"><span>Sayfanın kendi yorumlarını çıkar</span><span class="dugme"><input type="checkbox" id="fSayfa" ${S.filtre.sayfaHaric ? 'checked' : ''}><span></span></span></label>
+      <label for="fAra" style="margin-top:8px">Ara</label>
+      <input type="search" id="fAra" placeholder="İsim veya yorumda (ör. katıldım)" value="${e(S.filtre.ara)}">
+      <div class="soluk" style="margin-top:6px">Arama çekilişi ve dışa aktarmayı da sınırlar.</div>
+    </div>
+    <div class="eylemler">
+      <button class="btn" id="dCekilis" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8S10 3 7.5 3 5 6 7 7.5 12 8 12 8zM12 8s2-5 4.5-5S19 6 17 7.5 12 8 12 8z"/></svg>Çekiliş yap</button>
+      <button class="btn ikincil" id="dCsv" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Excel'e aktar (CSV)</button>
+      <button class="btn ikincil" id="dKopya" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>İsim listesini kopyala</button>
+    </div>
+    <p class="soluk">Son güncelleme: ${tarih(d.zaman)}</p>
+  </aside>
+  <section>
+    <div id="dUyari"></div>
+    <div class="kart" style="padding:0;overflow:hidden"><table class="tablo"><thead><tr><th>#</th><th>Ad Soyad</th><th>Yorum</th><th style="text-align:right">Adet</th></tr></thead><tbody id="dListe"></tbody></table><div id="dAlt"></div></div>
+  </section></div>`;
+  $('#fYanit').onchange = ev => { S.filtre.yanit = ev.target.checked; listeCiz(); };
+  $('#fSayfa').onchange = ev => { S.filtre.sayfaHaric = ev.target.checked; listeCiz(); };
+  let zam; $('#fAra').oninput = ev => { clearTimeout(zam); zam = setTimeout(() => { S.filtre.ara = ev.target.value; S.gosterim = 500; listeCiz(); }, 200); };
+  $('#dCekilis').onclick = cekilisAc;
+  $('#dCsv').onclick = csvIndir;
+  $('#dKopya').onclick = listeKopyala;
+  listeCiz();
+}
+function listeCiz() {
+  const { kisiler, adsiz, yorumSay } = hesapla();
+  $('#dIstat').innerHTML = `<div><b>${kisiler.length}</b>kişi</div><div><b>${yorumSay}</b>yorum</div><div><b>${adsiz}</b>adı gelmeyen</div>`;
+  $('#dUyari').innerHTML = adsiz > 0 ? `<div class="uyari">${adsiz} yorumun yazarını Facebook göstermedi. Uygulaman henüz Meta onayı almadıysa böyle olur. Ne yapılacağı Ayarlar sayfasında yazıyor.</div>` : '';
+  const govde = $('#dListe');
+  if (!kisiler.length) { govde.innerHTML = `<tr><td colspan="4" class="bos">${S.detay.yorumlar.length ? 'Filtreye uyan kişi yok.' : 'Bu paylaşımda yorum yok.'}</td></tr>`; $('#dAlt').innerHTML = ''; return; }
+  const yorumHtml = m => e(m) || '<i>(görsel/çıkartma)</i>';
+  govde.innerHTML = kisiler.slice(0, S.gosterim).map((k, i) => `
+    <tr class="kisi" title="Tüm yorumları görmek için tıkla">
+      <td class="no">${i + 1}</td><td class="ad">${e(k.ad)}</td>
+      <td class="yorum"><div class="ilk">${yorumHtml(k.yorumlar[0].m)}</div>
+        <div class="tum">${k.yorumlar.map(y => `<div>${yorumHtml(y.m)}<small>${tarih(y.t)}${y.y ? ' · yanıt' : ''}</small></div>`).join('')}</div></td>
+      <td class="say">${k.yorumlar.length > 1 ? `<span class="rozet">${k.yorumlar.length}</span>` : '1'}</td>
+    </tr>`).join('');
+  govde.querySelectorAll('tr.kisi').forEach(r => r.onclick = () => r.classList.toggle('acik'));
+  $('#dAlt').innerHTML = kisiler.length > S.gosterim ? `<div style="padding:12px;text-align:center"><button class="btn ikincil" id="dDaha" type="button">${kisiler.length - S.gosterim} kişi daha göster</button></div>` : '';
+  const dd = $('#dDaha'); if (dd) dd.onclick = () => { S.gosterim += 1000; listeCiz(); };
+}
+
+/* ---------- Dışa aktarma ---------- */
+function csvIndir() {
+  const { kisiler } = hesapla();
+  const h = v => '"' + String(v ?? '').replace(/"/g, '""').replace(/\r?\n/g, ' ') + '"';
+  const satirlar = [['Sıra', 'Ad Soyad', 'Facebook ID', 'Yorum Sayısı', 'İlk Yorum Tarihi', 'İlk Yorum', 'Tüm Yorumlar'].map(h).join(';')];
+  kisiler.forEach((k, i) => satirlar.push([i + 1, k.ad, k.id, k.yorumlar.length, tarih(k.yorumlar[0].t), k.yorumlar[0].m, k.yorumlar.map(y => y.m).join(' | ')].map(h).join(';')));
+  const blob = new Blob(['﻿' + satirlar.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `yorumlar_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  bilgi('CSV indirildi. İndirilenler klasörüne bak.');
+}
+async function kopyala(metin, mesaj) {
+  try { await navigator.clipboard.writeText(metin); bilgi(mesaj); return; } catch {}
+  const t = document.createElement('textarea'); t.value = metin; t.style.position = 'fixed'; t.style.opacity = '0';
+  document.body.appendChild(t); t.select();
+  try { document.execCommand('copy') ? bilgi(mesaj) : bilgi('Kopyalanamadı'); } catch { bilgi('Kopyalanamadı'); }
+  t.remove();
+}
+function listeKopyala() {
+  const { kisiler } = hesapla();
+  kopyala(`Yorum yapanlar (${kisiler.length} kişi)\n` + kisiler.map((k, i) => `${i + 1}. ${k.ad}`).join('\n'), 'İsim listesi panoya kopyalandı');
+}
+
+/* ---------- Çekiliş ---------- */
+function rastgele(n) { const a = new Uint32Array(1); const sinir = Math.floor(0x100000000 / n) * n; do { crypto.getRandomValues(a); } while (a[0] >= sinir); return a[0] % n; }
+function karistir(dizi) { const d = dizi.slice(); for (let i = d.length - 1; i > 0; i--) { const j = rastgele(i + 1); [d[i], d[j]] = [d[j], d[i]]; } return d; }
+function cekilisAc() {
+  const { kisiler } = hesapla();
+  if (!kisiler.length) return bilgi('Çekiliş için kişi yok');
+  $('#katman').innerHTML = `
+  <div class="perde" id="perde"><div class="pencere" role="dialog" aria-modal="true" aria-labelledby="cBaslik">
+    <h2 id="cBaslik">Çekiliş</h2>
+    <div class="soluk">${kisiler.length} katılımcı arasından. Her kişi kaç yorum yazarsa yazsın bir kez sayılır.</div>
+    <div class="iki">
+      <div><label for="cAsil">Kazanan</label><input type="number" id="cAsil" min="1" value="1"></div>
+      <div><label for="cYedek">Yedek</label><input type="number" id="cYedek" min="0" value="0"></div>
+    </div>
+    <div class="cark" id="cCark">🎁</div>
+    <div class="sonuc" id="cSonuc"></div>
+    <button class="btn tam" id="cCek" type="button">Çekilişi yap</button>
+    <div class="iki" style="margin-top:8px">
+      <button class="btn ikincil gizli" id="cKopya" type="button">Sonucu kopyala</button>
+      <button class="btn ikincil" id="cKapat" type="button">Kapat</button>
+    </div>
+  </div></div>`;
+  try { history.pushState({ ekran: S.ekran }, ''); } catch {}
+  $('#cKapat').onclick = geri;
+  $('#perde').onclick = ev => { if (ev.target.id === 'perde') geri(); };
+  $('#cCek').focus();
+  let sonucMetin = '';
+  $('#cCek').onclick = () => {
+    const asil = Math.max(1, parseInt($('#cAsil').value) || 1), yedek = Math.max(0, parseInt($('#cYedek').value) || 0);
+    if (asil + yedek > kisiler.length) return bilgi(`En fazla ${kisiler.length} kişi seçilebilir`);
+    const btn = $('#cCek'); btn.disabled = true; $('#cSonuc').innerHTML = ''; $('#cKopya').classList.add('gizli');
+    const cark = $('#cCark'); let adim = 0;
+    const azHareket = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const bitir = () => {
+      const secilen = karistir(kisiler).slice(0, asil + yedek);
+      cark.textContent = '🎉 ' + secilen[0].ad;
+      $('#cSonuc').innerHTML = secilen.map((k, i) => i < asil
+        ? `<div><span class="etiket">${asil > 1 ? (i + 1) + '. kazanan' : 'Kazanan'}</span>${e(k.ad)}</div>`
+        : `<div class="yedek"><span class="etiket">${i - asil + 1}. yedek</span>${e(k.ad)}</div>`).join('');
+      sonucMetin = `Çekiliş sonucu (${tarih(new Date())}, ${kisiler.length} katılımcı)\n\n`
+        + secilen.map((k, i) => i < asil ? `🏆 ${asil > 1 ? (i + 1) + '. ' : ''}Kazanan: ${k.ad}` : `${i - asil + 1}. Yedek: ${k.ad}`).join('\n');
+      btn.disabled = false; btn.textContent = 'Tekrar çek';
+      $('#cKopya').classList.remove('gizli');
+    };
+    if (azHareket) return bitir();
+    const zam = setInterval(() => {
+      cark.textContent = kisiler[rastgele(kisiler.length)].ad;
+      if (++adim > 22) { clearInterval(zam); bitir(); }
+    }, 70);
+  };
+  $('#cKopya').onclick = () => kopyala(sonucMetin, 'Sonuç panoya kopyalandı');
+}
+
+/* ---------- Ayarlar ---------- */
+function cizAyarlar() {
+  ustBar('Ayarlar', { geri: true });
+  icerik.innerHTML = `<div class="dar">
+  <div class="kart"><h2>Bağlı sayfa</h2><div>${e(S.ayar?.sayfa?.ad || '-')}</div><div class="soluk">ID: ${e(S.ayar?.sayfa?.id || '-')}</div></div>
+  <details class="kart"><summary>Facebook bağlantısını değiştir / yenile</summary><div style="margin-top:10px">${baglantiFormuHtml()}</div>
+    <div id="aHata"></div><button class="btn tam" id="aKaydet" type="button">Bağlantıyı kaydet</button></details>
+  <details class="kart"><summary>Bazı isimler neden gelmiyor?</summary>
+    <p style="font-size:14px">Facebook, uygulaman Meta incelemesinden geçmeden sayfa yöneticisi olmayan kişilerin adını göstermiyor. Tüm isimleri görmek için:</p>
+    <ol class="adim">
+      <li>developers.facebook.com'da uygulamanı aç, <b>Uygulama İncelemesi</b> bölümüne gir.</li>
+      <li><code>pages_read_user_content</code> ve <code>pages_read_engagement</code> için gelişmiş erişim iste.</li>
+      <li>Meta genelde işletme doğrulaması ve kısa bir kullanım açıklaması ister. Onay gelince uygulamayı <b>Canlı</b> moda al.</li>
+    </ol></details>
+  <details class="kart"><summary>Güvenlik</summary>
+    <p style="font-size:14px">Sayfa anahtarı bu bilgisayardaki tarayıcıda saklanır. Bilgisayarı başkalarıyla paylaşıyorsan işin bitince aşağıdan bağlantıyı kaldır. Bu dosyayı başkasına göndermen güvenlidir, çünkü anahtar dosyanın içinde değil, tarayıcıdadır.</p></details>
+  <div id="aSilKutu"><button class="btn tehlike tam" id="aSil" type="button">Bu bilgisayardan bağlantıyı kaldır</button></div>
+  </div>`;
+  const al = baglantiFormuBagla();
+  $('#aKaydet').onclick = async () => {
+    const btn = $('#aKaydet'); $('#aHata').innerHTML = ''; btn.disabled = true;
+    try { ayarYaz(await al()); S.listeYuklendi = false; S.paylasimlar = []; bilgi('Bağlantı kaydedildi: ' + S.ayar.sayfa.ad); cizAyarlar(); }
+    catch (h) { $('#aHata').innerHTML = `<div class="hata">${e(h.message)}</div>`; btn.disabled = false; }
+  };
+  $('#aSil').onclick = () => {
+    $('#aSilKutu').innerHTML = `<div class="kart"><b>Emin misin?</b><p class="soluk">Tekrar kullanmak için Facebook bağlantısını baştan yapman gerekir.</p>
+      <div class="iki"><button class="btn tehlike" id="aEvet" type="button">Evet, kaldır</button><button class="btn ikincil" id="aVazgec" type="button">Vazgeç</button></div></div>`;
+    $('#aVazgec').onclick = cizAyarlar;
+    $('#aEvet').onclick = () => { ayarYaz(null); S.paylasimlar = []; S.listeYuklendi = false; S.detay = null; git('kurulum', true); };
+  };
+}
+
+/* ---------- Başlangıç ---------- */
+S.ayar = ayarOku();
+git(S.ayar ? 'liste' : 'kurulum', true);
+</script>
+</body>
+</html>

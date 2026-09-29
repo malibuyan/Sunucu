@@ -122,6 +122,20 @@ code{background:var(--zemin);padding:1px 5px;border-radius:5px;font-size:13px}
 @media (prefers-reduced-motion: reduce){.donen{animation-duration:3s}}
 .bos{text-align:center;color:var(--soluk);padding:30px 10px}
 .gizli{display:none!important}
+.pencere.genis{max-width:720px}
+.onizleme{white-space:pre-wrap;word-break:break-word;background:var(--zemin);border:1px solid var(--cizgi);border-radius:8px;padding:12px;max-height:220px;overflow:auto;font-size:14px}
+.degisken{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.degisken button{border:1px solid var(--cizgi);background:var(--kart);border-radius:14px;padding:2px 10px;font-size:12px;cursor:pointer;color:var(--ana);font-family:ui-monospace,Consolas,monospace}
+.secenek-satir{display:flex;flex-wrap:wrap;gap:16px;margin-top:10px;font-size:14px}
+.secenek-satir label{display:flex;align-items:center;gap:6px;margin:0;font-weight:400;cursor:pointer}
+.secenek-satir input{accent-color:var(--ana);width:16px;height:16px}
+.kisi-liste{max-height:300px;overflow:auto;border:1px solid var(--cizgi);border-radius:8px;margin-top:10px}
+.kisi-satir{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--cizgi);font-size:14px}
+.kisi-satir:last-child{border-bottom:0}
+.kisi-satir .ad{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kisi-satir.gonderildi .ad{color:var(--soluk);text-decoration:line-through}
+.kucuk-btn{border:0;border-radius:6px;padding:5px 10px;font-size:13px;font-weight:600;cursor:pointer;background:var(--ana-acik);color:var(--ana);text-decoration:none;white-space:nowrap}
+.parca{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}
 .secenekler{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media (max-width:700px){.secenekler{grid-template-columns:1fr}}
 .secenek{cursor:pointer;display:flex;flex-direction:column;gap:6px;margin:0;transition:border-color .15s}
@@ -622,6 +636,7 @@ function cizDetay() {
     <div class="eylemler">
       <button class="btn" id="dCekilis" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8S10 3 7.5 3 5 6 7 7.5 12 8 12 8zM12 8s2-5 4.5-5S19 6 17 7.5 12 8 12 8z"/></svg>Çekiliş yap</button>
       <button class="btn ikincil" id="dCsv" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Excel'e aktar (CSV)</button>
+      <button class="btn ikincil" id="dTesekkur" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Teşekkür mesajı hazırla</button>
       <button class="btn ikincil" id="dKopya" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>İsim listesini kopyala</button>
     </div>
     <p class="soluk">Son güncelleme: ${tarih(d.zaman)}</p>
@@ -636,6 +651,7 @@ function cizDetay() {
   $('#dCekilis').onclick = cekilisAc;
   $('#dCsv').onclick = csvIndir;
   $('#dKopya').onclick = listeKopyala;
+  $('#dTesekkur').onclick = tesekkurAc;
   const yb = $('#dYeniden'); if (yb) yb.onclick = () => git('yapistir');
   listeCiz();
 }
@@ -683,6 +699,125 @@ async function kopyala(metin, mesaj) {
 function listeKopyala() {
   const { kisiler } = hesapla();
   kopyala(`Yorum yapanlar (${kisiler.length} kişi)\n` + kisiler.map((k, i) => `${i + 1}. ${k.ad}`).join('\n'), 'İsim listesi panoya kopyalandı');
+}
+
+
+/* ---------- Teşekkür mesajı ---------- */
+const TSK_DEPO = 'yorumListeleyici.tesekkur';
+const TSK_VARSAYILAN = {
+  toplu: 'Paylaşımıma yorum yapan {isimler}, ilginiz ve güzel yorumlarınız için hepinize çok teşekkür ederim! 🙏',
+  ozel: 'Merhaba {ad}, paylaşımıma yaptığın yorum için çok teşekkür ederim! 🙏',
+  bicim: 'tam', ve: true, sekme: 'toplu',
+};
+const YORUM_SINIRI = 8000; // Facebook yorum uzunluğu sınırına yakın güvenli değer
+function tskAyar() { try { return { ...TSK_VARSAYILAN, ...JSON.parse(localStorage.getItem(TSK_DEPO) || '{}') }; } catch { return { ...TSK_VARSAYILAN }; } }
+function tskKaydet(a) { try { localStorage.setItem(TSK_DEPO, JSON.stringify(a)); } catch {} }
+const ilkAd = ad => String(ad).split(' ')[0];
+function isimListesi(adlar, ve) {
+  if (adlar.length <= 1) return adlar.join('');
+  return ve ? adlar.slice(0, -1).join(', ') + ' ve ' + adlar[adlar.length - 1] : adlar.join(', ');
+}
+function sablonDoldur(sablon, v) { return sablon.replace(/\{(isimler|sayi|ad|adsoyad)\}/g, (_, k) => v[k] ?? ''); }
+/* Uzun listeyi Facebook sınırına göre parçalara böler; her parça şablonun tamamını taşır */
+function topluMesajlar(sablon, adlar, ve) {
+  const tek = sablonDoldur(sablon, { isimler: isimListesi(adlar, ve), sayi: adlar.length });
+  if (tek.length <= YORUM_SINIRI || !sablon.includes('{isimler}')) return [tek];
+  const bos = sablonDoldur(sablon, { isimler: '', sayi: adlar.length }).length, sinir = YORUM_SINIRI - bos - 10;
+  const gruplar = []; let g = [], uzunluk = 0;
+  for (const a of adlar) {
+    if (g.length && uzunluk + a.length + 2 > sinir) { gruplar.push(g); g = []; uzunluk = 0; }
+    g.push(a); uzunluk += a.length + 2;
+  }
+  if (g.length) gruplar.push(g);
+  return gruplar.map(x => sablonDoldur(sablon, { isimler: isimListesi(x, ve), sayi: adlar.length }));
+}
+function tesekkurAc() {
+  const { kisiler } = hesapla();
+  if (!kisiler.length) return bilgi('Listede kişi yok');
+  const A = tskAyar(), gonderilen = new Set();
+  $('#katman').innerHTML = `
+  <div class="perde" id="perde"><div class="pencere genis" role="dialog" aria-modal="true" aria-labelledby="tBaslik">
+    <h2 id="tBaslik">Teşekkür mesajı</h2>
+    <div class="soluk">Listedeki ${kisiler.length} kişi için. Arama ve çıkardığın kişiler burada da geçerli.</div>
+    <div class="sekme" id="tSekme" style="margin-top:12px">
+      <button type="button" data-s="toplu">Herkese tek mesaj</button>
+      <button type="button" data-s="ozel">Kişiye özel</button>
+    </div>
+    <div id="tToplu">
+      <label for="tSablon1">Mesaj</label>
+      <textarea id="tSablon1" style="min-height:90px;font-size:14px;word-break:normal">${e(A.toplu)}</textarea>
+      <div class="degisken"><span class="soluk">Ekle:</span><button type="button" data-ek="{isimler}">{isimler}</button><button type="button" data-ek="{sayi}">{sayi}</button></div>
+      <div class="secenek-satir">
+        <label><input type="radio" name="tBicim" value="tam" ${A.bicim === 'tam' ? 'checked' : ''}> Ad Soyad</label>
+        <label><input type="radio" name="tBicim" value="ilk" ${A.bicim === 'ilk' ? 'checked' : ''}> Sadece ad</label>
+        <label><input type="checkbox" id="tVe" ${A.ve ? 'checked' : ''}> Son isimden önce "ve"</label>
+      </div>
+      <label>Önizleme</label>
+      <div id="tOnizleme"></div>
+      <p class="soluk" style="margin:8px 0 0">Kopyala, sonra paylaşımına yorum olarak ya da yeni gönderi olarak yapıştır. Yapıştırılan isimler etiket olmaz. Birini etiketlemek istersen Facebook'ta @ yazıp listeden seçmen gerekir.</p>
+    </div>
+    <div id="tOzel" class="gizli">
+      <label for="tSablon2">Mesaj</label>
+      <textarea id="tSablon2" style="min-height:70px;font-size:14px;word-break:normal">${e(A.ozel)}</textarea>
+      <div class="degisken"><span class="soluk">Ekle:</span><button type="button" data-ek2="{ad}">{ad}</button><button type="button" data-ek2="{adsoyad}">{adsoyad}</button></div>
+      <div class="parca" style="margin-top:12px"><span class="soluk" id="tSayac"></span><button class="btn" id="tSiradaki" type="button">Sıradakini kopyala</button></div>
+      <div class="kisi-liste" id="tKisiler"></div>
+      <p class="soluk" style="margin:8px 0 0">Facebook toplu otomatik mesaja izin vermediği için gönderme işi sende kalır. "Sıradakini kopyala" mesajı panoya alır ve varsa kişinin profilini yeni sekmede açar. Orada <b>Mesaj gönder</b> deyip yapıştırırsın. Gönderdiklerin üstü çizili görünür.</p>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:16px"><button class="btn ikincil" id="tKapat" type="button">Kapat</button></div>
+  </div></div>`;
+  try { history.pushState({ ekran: S.ekran }, ''); } catch {}
+  $('#tKapat').onclick = geri;
+  $('#perde').onclick = ev => { if (ev.target.id === 'perde') geri(); };
+
+  const sekmeSec = ad => {
+    A.sekme = ad; tskKaydet(A);
+    document.querySelectorAll('#tSekme button').forEach(b => b.classList.toggle('aktif', b.dataset.s === ad));
+    $('#tToplu').classList.toggle('gizli', ad !== 'toplu'); $('#tOzel').classList.toggle('gizli', ad !== 'ozel');
+  };
+  document.querySelectorAll('#tSekme button').forEach(b => b.onclick = () => sekmeSec(b.dataset.s));
+
+  const ekle = (alan, metin) => { const t = $(alan), i = t.selectionStart ?? t.value.length; t.value = t.value.slice(0, i) + metin + t.value.slice(t.selectionEnd ?? i); t.focus(); t.selectionStart = t.selectionEnd = i + metin.length; t.dispatchEvent(new Event('input')); };
+  document.querySelectorAll('[data-ek]').forEach(b => b.onclick = () => ekle('#tSablon1', b.dataset.ek));
+  document.querySelectorAll('[data-ek2]').forEach(b => b.onclick = () => ekle('#tSablon2', b.dataset.ek2));
+
+  const toplu = () => {
+    A.toplu = $('#tSablon1').value; A.bicim = document.querySelector('input[name=tBicim]:checked').value; A.ve = $('#tVe').checked; tskKaydet(A);
+    const adlar = kisiler.map(k => A.bicim === 'ilk' ? ilkAd(k.ad) : k.ad);
+    const msj = topluMesajlar(A.toplu, adlar, A.ve);
+    $('#tOnizleme').innerHTML = msj.map((m, i) => `
+      ${msj.length > 1 ? `<div class="parca"><b style="font-size:14px">Bölüm ${i + 1} / ${msj.length}</b></div>` : ''}
+      <div class="onizleme">${e(m)}</div>
+      <div class="parca"><span class="soluk">${m.length.toLocaleString('tr-TR')} karakter${!A.toplu.includes('{isimler}') ? ' · mesajda {isimler} yok, isimler eklenmeyecek' : ''}</span>
+        <button class="btn kucuk-btn" type="button" data-kopya="${i}">${msj.length > 1 ? 'Bu bölümü kopyala' : 'Mesajı kopyala'}</button></div>`).join('')
+      + (msj.length > 1 ? '<p class="soluk">Liste tek yoruma sığmadığı için bölümlere ayrıldı. Her bölümü ayrı yorum olarak paylaş.</p>' : '');
+    document.querySelectorAll('[data-kopya]').forEach(b => b.onclick = () => kopyala(msj[+b.dataset.kopya], 'Mesaj panoya kopyalandı'));
+  };
+  $('#tSablon1').oninput = toplu; $('#tVe').onchange = toplu;
+  document.querySelectorAll('input[name=tBicim]').forEach(r => r.onchange = toplu);
+
+  const ozelMesaj = k => sablonDoldur(A.ozel, { ad: ilkAd(k.ad), adsoyad: k.ad });
+  const gonder = k => {
+    kopyala(ozelMesaj(k), `${k.ad} için mesaj kopyalandı`);
+    if (k.link) window.open(k.link, '_blank', 'noopener');
+    gonderilen.add(k.id); ozel();
+  };
+  const ozel = () => {
+    A.ozel = $('#tSablon2').value; tskKaydet(A);
+    $('#tSayac').textContent = `${gonderilen.size} / ${kisiler.length} gönderildi`;
+    $('#tSiradaki').disabled = gonderilen.size >= kisiler.length;
+    $('#tKisiler').innerHTML = kisiler.map((k, i) => `
+      <div class="kisi-satir${gonderilen.has(k.id) ? ' gonderildi' : ''}" title="${e(ozelMesaj(k))}">
+        <span class="ad">${gonderilen.has(k.id) ? '✓ ' : ''}${e(k.ad)}</span>
+        ${k.link ? `<a class="kucuk-btn" href="${e(k.link)}" target="_blank" rel="noopener">Profil</a>` : ''}
+        <button class="kucuk-btn" type="button" data-oz="${i}">Kopyala</button>
+      </div>`).join('');
+    document.querySelectorAll('[data-oz]').forEach(b => b.onclick = () => gonder(kisiler[+b.dataset.oz]));
+  };
+  $('#tSablon2').oninput = ozel;
+  $('#tSiradaki').onclick = () => { const k = kisiler.find(x => !gonderilen.has(x.id)); if (k) gonder(k); };
+
+  sekmeSec(A.sekme); toplu(); ozel();
 }
 
 /* ---------- Çekiliş ---------- */

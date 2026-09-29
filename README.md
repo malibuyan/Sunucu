@@ -15,7 +15,7 @@ Uygulamaların `veri/` klasörü sunucuda kalır; ayarlar ve anahtarlar bu repoy
 
 ## Bilgisayar sürümü (sunucusuz)
 
-`pc/yorum-listeleyici.html` tek başına çalışır: dosyayı indirip Chrome veya Edge ile açmak yeterli.
+`pc/yorum-listeleyici.html` tek başına çalışır. İki yolu var: kişisel profil paylaşımları için yorumları kopyala-yapıştır ile listeleme (Facebook bu yorumları uygulamalara açmadığı için tek yol) ve Facebook Sayfaları için Graph API ile otomatik çekme. dosyayı indirip Chrome veya Edge ile açmak yeterli.
 Tarayıcı Facebook'a doğrudan bağlanır; VPS, PHP veya kurulum gerekmez. Sayfa anahtarı yalnızca
 o bilgisayarın tarayıcısında saklanır, dosyanın içinde değildir.
 

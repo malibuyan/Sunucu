@@ -6,7 +6,10 @@ require __DIR__ . '/lib.php';
 $kilit = fopen(YP_VERI . '/cek.kilit', 'c');
 if (!flock($kilit, LOCK_EX | LOCK_NB)) exit; // önceki çalışma sürüyor
 $hedef = $argv[1] ?? null;
+// Ana repodaki yeni uygulama klasörlerini kendiliğinden bağla
+if (!$hedef) { try { ypAnaEsitle(); } catch (Throwable $e) { ypGunluk('ANA REPO HATA: ' . $e->getMessage()); } }
 foreach (ypAyar()['github'] as $b) {
     if ($hedef ? $b['ad'] !== $hedef : empty($b['oto'])) continue;
     try { ypGithubCalistir($b['ad']); } catch (Throwable $e) { /* günlüğe yazıldı */ }
 }
+try { ypDurumYaz(); } catch (Throwable $e) { /* durum dosyası yazılamadıysa yayın etkilenmez */ }

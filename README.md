@@ -11,6 +11,16 @@ Mehmet Ali'nin VPS'inde çalışan uygulamalar ve onları yayınlayan **Yayın P
 | `uygulamalar/yorumlar` | `https://SUNUCU/yorumlar/` — Facebook sayfa yorumlarını listeler, çekiliş yapar |
 
 Bu repoya yapılan her gönderim, Yayın Paneli tarafından 5 dakika içinde (webhook varsa hemen) sunucuya yayınlanır.
+
+**Yeni uygulama eklemek için panele girmek gerekmez:** `uygulamalar/` altına yeni bir klasör
+(küçük harf, rakam, tire) eklenip gönderildiğinde panel onu kendiliğinden bağlar ve yayınlar.
+Desteklenen yapı: statik dosyalar ve PHP (SQLite dahil). Kalıcı veriler uygulamanın `veri/` klasöründe tutulur.
+
+Her yayın denemesinin sonucu sunucuda gizli adresli bir dosyaya yazılır:
+`https://SUNUCU/durum/<anahtar>.json` (adres kurulum sonunda ve `/root/yayin-bilgi.txt` içinde yazar).
+Hangi sürümün yayında olduğu, hata ve uyarılar buradan okunur.
+
+Repodan bir klasörü silmek uygulamayı sunucudan kaldırmaz; kaldırma panelden yapılır.
 Uygulamaların `veri/` klasörü sunucuda kalır; ayarlar ve anahtarlar bu repoya **hiçbir zaman** girmez.
 
 ## Bilgisayar sürümü (sunucusuz)
@@ -32,6 +42,8 @@ curl -fsSL https://raw.githubusercontent.com/malibuyan/sunucu/main/kur.sh -o /tm
 Kurulum sonunda panel adresi ve şifresi ekrana yazılır (`cat /root/yayin-bilgi.txt` ile tekrar görülebilir).
 
 ## Panele uygulama bağlama
+
+Bu repo için gerekmez (yukarıdaki otomatik bağlama). Başka bir repoyu bağlamak için:
 
 Panel → **GitHub** → Repo bağla:
 

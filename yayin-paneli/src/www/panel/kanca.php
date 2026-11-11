@@ -26,3 +26,4 @@ echo 'alındı: ' . implode(', ', $eslesen);
 if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
 ignore_user_abort(true); @set_time_limit(600);
 foreach ($eslesen as $ad) { try { ypGithubCalistir($ad); } catch (Throwable $e) {} }
+try { ypDurumYaz(); } catch (Throwable $e) {}

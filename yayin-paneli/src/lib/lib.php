@@ -11,7 +11,7 @@ define('YP_VERI', YP_KOK . '/veri');
 define('YP_GIT', YP_KOK . '/git');
 define('YP_GECICI', YP_KOK . '/gecici');
 define('YP_AYAR', YP_VERI . '/panel.php');
-const YP_AYRILMIS = ['panel', 'index', 'veri', 'www', 'git', 'well-known'];
+const YP_AYRILMIS = ['panel', 'index', 'veri', 'www', 'git', 'well-known', 'durum'];
 
 /* ---------- Ayar ---------- */
 function ypAyar(): array {
@@ -257,3 +257,78 @@ function ypGithubCalistir(string $ad, bool $zorla = false): array {
     if ($hata) throw new RuntimeException($hata);
     return $s;
 }
+
+/* ---------- Ana repo: uygulamalar/ altındaki her klasör kendiliğinden bağlanır ---------- */
+/**
+ * Ayardaki 'ana' repoyu çeker; kök klasörünün altındaki her uygulama klasörü için
+ * henüz bağlantı yoksa otomatik bir GitHub bağlantısı ekler. Böylece repoya yeni bir
+ * klasör eklemek, panele girmeden yeni bir uygulama yayınlamak için yeterlidir.
+ * @return string[] yeni bağlanan uygulama adları
+ */
+function ypAnaEsitle(): array {
+    $ana = ypAyar()['ana'] ?? null;
+    if (!is_array($ana) || empty($ana['repo']) || !ypRepoGecerli((string)$ana['repo'])) return [];
+    $dal = (string)($ana['dal'] ?? '') ?: 'main';
+    $kok = trim((string)($ana['kok'] ?? 'uygulamalar'), '/');
+    if (!preg_match('~^[\w./-]+$~', $dal) || $kok === '' || str_contains($kok, '..')) return [];
+    $repo = rtrim(preg_replace('~\.git/?$~', '', (string)$ana['repo']), '/');
+    $dizin = YP_GIT . '/.ana';
+    if (!is_dir(YP_GIT)) mkdir(YP_GIT, 0700, true);
+    if (!is_dir($dizin . '/.git')) {
+        ypSil($dizin);
+        [$k, $c] = ypKomut(['git', 'clone', '--depth', '1', '--branch', $dal, $repo . '.git', $dizin]);
+        if ($k !== 0) { ypSil($dizin); throw new RuntimeException('Ana repo indirilemedi: ' . $c); }
+    } else {
+        [$k, $c] = ypKomut(['git', 'fetch', '--depth', '1', 'origin', $dal], $dizin);
+        if ($k !== 0) throw new RuntimeException('Ana repo güncellenemedi: ' . $c);
+        ypKomut(['git', 'reset', '--hard', 'FETCH_HEAD'], $dizin);
+    }
+    $adlar = [];
+    foreach (scandir($dizin . '/' . $kok) ?: [] as $ad) {
+        $yol = $dizin . '/' . $kok . '/' . $ad;
+        if ($ad[0] !== '.' && is_dir($yol) && !is_link($yol) && ypAdGecerli($ad)) $adlar[] = $ad;
+    }
+    $eklenen = [];
+    ypAyarGuncelle(function (array &$a) use ($adlar, $repo, $dal, $kok, &$eklenen) {
+        $var = array_column($a['github'], 'ad');
+        foreach ($adlar as $ad) {
+            if (in_array($ad, $var, true)) continue;
+            $a['github'][] = [
+                'ad' => $ad, 'repo' => $repo, 'dal' => $dal, 'klasor' => $kok . '/' . $ad, 'oto' => true,
+                'token' => '', 'commit' => '', 'durum' => 'Bekliyor', 'hata' => null, 'kontrol' => 0, 'yayin' => 0,
+            ];
+            $eklenen[] = $ad;
+        }
+    });
+    foreach ($eklenen as $ad) ypGunluk("OTOMATİK BAĞLANDI $ad ($kok/$ad)");
+    return $eklenen;
+}
+
+/**
+ * Son yayın durumunu gizli adresli bir dosyaya yazar: /durum/<anahtar>.json
+ * Sunucuya girmeden "yayın oldu mu, hata var mı" sorusunun yanıtı buradan okunur.
+ */
+function ypDurumYaz(): void {
+    $a = ypAyar();
+    $anahtar = (string)($a['durum'] ?? '');
+    if (!preg_match('/^[a-f0-9]{32}$/', $anahtar)) return;
+    $d = YP_WWW . '/durum';
+    if (!is_dir($d)) mkdir($d, 0755, true);
+    $satirlar = is_file(YP_VERI . '/gunluk.txt') ? (file(YP_VERI . '/gunluk.txt', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: []) : [];
+    $v = [
+        'zaman' => date('Y-m-d H:i:s'),
+        'uygulamalar' => array_map(fn($b) => [
+            'ad' => $b['ad'], 'klasor' => $b['klasor'] ?? '', 'durum' => $b['durum'] ?? '', 'hata' => $b['hata'] ?? null,
+            'commit' => substr((string)($b['commit'] ?? ''), 0, 7),
+            'yayin' => !empty($b['yayin']) ? date('Y-m-d H:i:s', (int)$b['yayin']) : null,
+            'kontrol' => !empty($b['kontrol']) ? date('Y-m-d H:i:s', (int)$b['kontrol']) : null,
+            'uyarilar' => is_dir(YP_WWW . '/' . $b['ad']) ? ypKontrol(YP_WWW . '/' . $b['ad']) : ['Yayında değil'],
+        ], $a['github']),
+        'gunluk' => array_slice($satirlar, -40),
+    ];
+    $g = $d . '/.' . bin2hex(random_bytes(4));
+    file_put_contents($g, json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+    @chmod($g, 0644);
+    rename($g, $d . '/' . $anahtar . '.json');
+}
+

@@ -122,6 +122,18 @@ else
   ok "Mevcut panel şifresi korundu"
 fi
 
+# ---------- Ana repo ve durum adresi ----------
+# Ana repodaki uygulamalar/ altındaki her klasör kendiliğinden yayınlanır (panelden bağlamak gerekmez).
+YP_ANA="${ANA_REPO:-https://github.com/malibuyan/sunucu}" "$PHPBIN" -r '
+  $d = "/var/www/yayin/veri/panel.php";
+  $a = include $d;
+  if (empty($a["ana"])) $a["ana"] = ["repo" => getenv("YP_ANA"), "dal" => "main", "kok" => "uygulamalar"];
+  if (empty($a["durum"])) $a["durum"] = bin2hex(random_bytes(16));
+  file_put_contents($d, "<?php\nreturn " . var_export($a, true) . ";\n");'
+chown www-data:www-data "$KOK/veri/panel.php"; chmod 600 "$KOK/veri/panel.php"
+DURUM_ANAHTAR=$("$PHPBIN" -r '$a = include "/var/www/yayin/veri/panel.php"; echo $a["durum"] ?? "";')
+ok "Ana repo: ${ANA_REPO:-https://github.com/malibuyan/sunucu} (uygulamalar/ otomatik yayınlanır)"
+
 # ---------- nginx ----------
 adim "Web sunucusu ayarlanıyor"
 cat > /etc/nginx/snippets/yayin-ortak.conf <<NGX
@@ -167,6 +179,15 @@ if command -v ufw >/dev/null && ufw status 2>/dev/null | grep -q "Status: active
   ok "Güvenlik duvarında 80 ve 443 açıldı"
 fi
 
+# ---------- İlk yayın ----------
+adim "Repodaki uygulamalar yayınlanıyor"
+if sudo -u www-data "$PHPBIN" "$KOK/lib/cek.php"; then
+  YAYINDA=$(ls -d "$KOK"/www/*/ 2>/dev/null | xargs -r -n1 basename | grep -Ev '^(panel|durum)$' | tr '\n' ' ' || true)
+  ok "Yayında: ${YAYINDA:-henüz uygulama yok}"
+else
+  uyar "İlk yayın yapılamadı; 5 dakika içinde kendiliğinden yeniden denenecek."
+fi
+
 # ---------- Doğrulama ----------
 KOD=$(curl -s -o /dev/null -w '%{http_code}' -H 'X-YP: 1' -H 'Content-Type: application/json' -d '{"islem":"durum"}' http://127.0.0.1/panel/ || true)
 [ "$KOD" = "200" ] && ok "Panel yanıt veriyor" || uyar "Panel yerel testte $KOD döndü"
@@ -189,6 +210,7 @@ SIFRE_GOSTER=$(grep '^Şifre' /root/yayin-bilgi.txt 2>/dev/null | sed 's/^Şifre
   echo "Yayın Paneli"
   echo "Adres : $ADRES"
   [ -n "$SIFRE_GOSTER" ] && echo "Şifre : $SIFRE_GOSTER"
+  [ -n "$DURUM_ANAHTAR" ] && echo "Durum : ${ADRES%panel/}durum/${DURUM_ANAHTAR}.json"
   echo "Kurulum: $(date '+%Y-%m-%d %H:%M')"
 } > /root/yayin-bilgi.new
 mv /root/yayin-bilgi.new /root/yayin-bilgi.txt; chmod 600 /root/yayin-bilgi.txt
@@ -197,7 +219,9 @@ echo -e "\n${Y}═════════════════════�
 echo -e "${Y}  ✅ KURULUM TAMAM${N}\n"
 echo -e "  Panel adresi : ${M}$ADRES${N}"
 echo -e "  Panel şifresi: ${M}${SIFRE_GOSTER:-cat /root/yayin-bilgi.txt ile bak}${N}"
-echo -e "\n  Bu iki bilgiyi bir yere not et (ekran görüntüsü al)."
+[ -n "$DURUM_ANAHTAR" ] && echo -e "  Durum adresi : ${M}${ADRES%panel/}durum/${DURUM_ANAHTAR}.json${N}"
+echo -e "\n  Durum adresini Claude'a gönder; yayınları oradan izler."
+echo -e "  Panel adresi ve şifresini bir yere not et (ekran görüntüsü al)."
 echo -e "  Adresi telefonunun tarayıcısında aç, şifreyle gir."
 echo -e "  Bilgileri tekrar görmek için: cat /root/yayin-bilgi.txt"
 echo -e "${Y}══════════════════════════════════════════${N}\n"
